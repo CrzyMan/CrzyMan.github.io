@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Don't Hit The Walls</title>
+        <style>
+            canvas {
+                -webkit-animation: myfirst 60s infinite; /* Chrome, Safari, Opera */
+                -webkit-animation-timing-function: linear;
+                cursor: crosshair;
+                border: solid;
+            }
+            
+            /* Chrome, Safari, Opera */
+            @-webkit-keyframes myfirst {
+                0%   {background: #F26C4F;}
+                20%  {background: #FFF467;}
+                40%  {background: #3BB878;}
+                60%  {background: #00BFF3;}
+                80%  {background: #855FA8;}
+                100% {background: #F26C4F;}
+            }
+            
+            body {
+                background-color: #DDD;
+            }
+            
+            #container {
+                
+            }
+            
+            #container span {
+                display: none;
+                border: dashed;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform-style: preserve-3d;
+                transform: translateY(-50%) translateX(-50%);
+                padding: 10px;
+                z-index: 3;
+            }
+            
+            #sDist {
+                font-size: xx-large;
+                border: solid;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            #cover {
+                position: absolute;
+                overflow: hidden;
+                z-index: 2;
+                opacity: 0.7;
+                display: none;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+        <script src="ImageStack.js"></script>
+    </head> 
+    
+    <body>
+        <img id="cover" src="img/dark.png" />
+        <center>
+            <span id="sDist"></span>
+        </center><br/>
+        <center id="container">
+            <span id="sDoneScreen" style="background-color: white">
+                <h1>You dead!</h1>
+                <button onclick="hidePopup(0);">Get out of here</button>
+            </span>
+            <span id="sPauseScreen" style="background-color: white">
+                <h1>Hold UP!</h1>
+                <button onclick="hidePopup(1);">Get out of here</button>
+            </span>
+        </center>
+        <script type="text/javascript">
+
+/*******************
+ *******************
+ * START VARIABLES *
+ *******************
+ *******************/
+
+// main canvas
+var ctx_main = document.createElement('canvas').getContext('2d');
+ctx_main.data = ctx_main.getImageData(0, 0, ctx_main.canvas.width, ctx_main.canvas.height).data;
+ctx_main.canvas.onmousemove = function(e){
+    setMousePos(e);
+}
+
+ctx_main.canvas.onclick = function(e){
+    setMousePos(e);
+    startGame();
+}
+
+// DOM elements
+var cover = document.getElementById('cover');
+var sDoneScreen = document.getElementById('sDoneScreen');
+var sPauseScreen = document.getElementById('sPauseScreen');
+
+// set up display
+var sDist = document.getElementById('sDist');
+sDist.innerText = "0 cm";
+
+// all the parts to be loaded
+var parts = [
+    // ["path", image, modifier]
+    
+    // straight is first for easy acces
+    ["straight.png", null, 0],
+    
+    // ones that require animation
+    ["circle path.png", null, 0],
+    
+    // purely static parts
+    ["2 bend.png", null, 0],
+    ["5 bend.png", null, 0],
+    ["dot plate.png", null, 0],
+    ["left bend.png", null, 0],
+    ["right bend.png", null, 0],
+    ["ring.png", null, 0],
+];
+
+// variables for gameTick
+var startSpeed = 1;
+var speed = startSpeed;
+var distance = 0;
+var acceleration = 0.0005;
+var offsetY = speed;
+var activeParts = [0, 0]; // [bottom, top]
+var reqAnimFrameId = 0;
+var mouseX = 0, mouseY = 0;
+
+// animated parts
+var anims = [
+    // ["path", image, modifier]
+    ["circle anim 1.png", null, 1],
+];
+
+// loading images stuff
+var animsStack = new ImageStack();
+animsStack.loadNewStack(
+    // srcs
+    anims.map(function(e){return "img\\" + e[0];}),
+    
+    // onload
+    function(img){
+        anims[img.i][1] = img;
+    },
+    
+    // no need for oncomplete
+    function(img){}
+)
+
+var partsStack = new ImageStack();
+partsStack.loadNewStack(
+    // srcs
+    parts.map(function(e){return "img\\" + e[0];}),
+    
+    // onload
+    function(img){
+        parts[img.i][1] = img;
+    },
+    
+    // oncomplete
+    function(img){
+        ctx_main.canvas.width = img.width;
+        ctx_main.canvas.height = img.height;
+        
+        document.getElementById('container').appendChild(ctx_main.canvas);
+        ctx_main.drawImage(parts[activeParts[0]][1],0,0);
+    }
+)
+
+/*****************
+ *****************
+ * END VARIABLES *
+ *****************
+ *****************/
+
+
+
+
+
+/******************
+ ******************
+ * START GAMEPLAY *
+ ******************
+ ******************/
+
+ function startGame(){
+    startSpeed = 1;
+    speed = startSpeed;
+    distance = 0;
+    acceleration = 0.0005;
+    offsetY = speed;
+    activeParts = [0, 1];//newPart()];
+    updateDisplay();
+    cancelAnimationFrame(reqAnimFrameId);
+    gameTick();
+ }
+ 
+/*
+ * Performs game tick
+ */
+function gameTick(){
+    
+    if (distance >= 8000){
+        if (distance){}
+    }
+    
+    // draw the new frame
+    ctx_main.clearRect(0,0,ctx_main.canvas.width, ctx_main.canvas.height);
+    
+    drawParts();
+    
+    updateDisplay();
+    
+    /* do mouse stuff *
+    var ny = 0, part = 0;
+    if (mouseY < offsetY){
+        ny = mouseY - offsetY + ctx_main.canvas.height;
+        part = activeParts[1];
+    } else {
+        ny = mouseY - offsetY;
+        part = activeParts[0];
+    }
+    /* */
+    //if it is on track
+    //if (checkPixel(part, mouseX, ny)==1){
+    if (checkPix(mouseX, mouseY)==1){
+        offsetY += speed;
+        if (offsetY > ctx_main.canvas.height) {
+            activeParts[0] = activeParts[1];
+            activeParts[1] = newPart();
+            offsetY -= ctx_main.canvas.height;
+        }
+        distance += speed;
+        speed += acceleration;
+        
+        // call next gameTick
+        reqAnimFrameId = requestAnimationFrame(gameTick);
+    }
+    // if it is off track
+    else {
+        showPopup(0);
+    }
+    
+    
+};
+
+
+/*
+ * Stops the game tick from running
+ */
+function stopAnimation(){
+    cancelAnimationFrame(reqAnimFrameId);
+}
+
+/****************
+ ****************
+ * END GAMEPLAY *
+ ****************
+ ****************/
+
+
+
+
+
+/*****************
+ *****************
+ * START HELPERS *
+ *****************
+ *****************/
+
+/*
+ * Checks the pixel at a coordinate
+ *
+ * int x , the x-coordinate
+ *
+ * int y , the y-coordinate
+ *
+ * return int , {0: off track or hitting an animation, 1: on track}
+ */
+function checkPix(x, y){
+    if (x < 0 || y < 0 || x > ctx_main.canvas.width || y > ctx_main.canvas.height) return 1;
+    
+    var index = (~~y*ctx_main.canvas.width + ~~x)*4;
+    
+    ctx_main.data = ctx_main.getImageData(0, 0, ctx_main.canvas.width, ctx_main.canvas.height).data;
+    
+    var flag = ctx_main.data[index+3] > 0 ? 1 : 0;
+    
+    if (flag == 1){
+        flag -= ctx_main.data[index] != 255 && ctx_main.data[index+1] != 255 && ctx_main.data[index+2] != 255 ? 1 : 0;
+    }
+    
+    return flag;
+}
+
+/*
+ * Truncates a value to the decimal place
+ *
+ * float val , value to truncate
+ *
+ * int dec , the decimal place to truncate to
+ *
+ * return [float, int] , it depends on val and dec
+ */
+function trunc(val, dec){
+    var p = Math.pow(10, ~~dec||0);
+    return (~~(val*p))/p;
+}
+
+
+function round(val, dec){
+    var p = Math.pow(10, ~~dec||0);
+    return Math.round(p*val)/p;
+}
+
+/*
+ * Selects a random, non-start part
+ *
+ * return int , random int representing the index of from the second part to the last part
+ */
+function newPart(){
+    var part = 1+~~(Math.random()*(parts.length-1));
+    
+    switch (part){
+        case 1:
+            var options = [0];
+            parts[1][2] = options[randInt(options.length - 1)];
+            break;
+        
+        default:
+            break;
+    }
+    
+    return 1;
+    //return part;
+}
+
+/*
+ * Sets the mouse position from the MouseEvent passed, probably not IE or FF compatible
+ *
+ * MouseEvent e , the MouseEvent passed
+ */
+function setMousePos(e){
+    mouseX = e.offsetX - 4;
+    mouseY = e.offsetY;
+}
+
+/*
+ * update all data displays that are shown to the user
+ */
+function updateDisplay(){
+    sDist.innerText = distToString();
+}
+
+/*
+ * turn the distance into a string that always has decimals.
+ */
+function distToString(){
+    if (distance < 1000){
+        return ~~(distance/10) + " cm";
+    }
+    var num = round(distance/1000,2);
+    var dec = 10*round(num%1,2);
+    var mil = 10*round(10*num%1,2);
+    return num + (dec==0?".0":"") + (mil==0?"0":"") + " m"
+    
+}
+
+/*
+ *
+ */
+function drawParts(){
+    // draw the bottom part
+    drawPart(activeParts[0]);
+    
+    // draw the top part
+    drawPart(activeParts[1], true);
+}
+
+function drawPart(p, top){
+    switch (p){
+        case 1:
+            ctx_main.drawImage(parts[1][1], 0, offsetY-(top?ctx_main.canvas.height:0));
+            
+            ctx_main.save();
+            ctx_main.translate(ctx_main.canvas.width/2, offsetY-(top?ctx_main.canvas.height:0) + ctx_main.canvas.height/2);
+            ctx_main.rotate(anims[parts[1][2]][2]);
+            anims[parts[1][2]][2] = 0.1 + Math.PI*offsetY/ctx_main.canvas.height;
+            ctx_main.drawImage(anims[parts[p][2]][1], -ctx_main.canvas.width/2, -ctx_main.canvas.height/2);
+            ctx_main.restore();
+            break;
+        
+        default:
+            ctx_main.drawImage(parts[p][1], 0, offsetY-(top?ctx_main.canvas.height:0));
+            break;
+    }
+}
+
+function randInt(max, min){
+    min = min || 0;
+    return ~~min + ~~(Math.random()*(max-min+1));
+}
+
+function showPopup(p){
+    cover.style.display = 'block';
+    switch (p){
+        case 0:
+            sDoneScreen.style.display = 'block';
+            break;
+        
+        case 1:
+            sPauseScreen.style.display = 'block';
+            break;
+        
+        default:
+            break;
+    }
+}
+
+function hidePopup(p){
+    cover.style.display = 'none';
+    switch (p){
+        case 0:
+            sDoneScreen.style.display = 'none';
+            break;
+        
+        case 1:
+            sPauseScreen.style.display = 'none';
+            break;
+        
+        default:
+            break;
+    }
+}
+
+/***************
+ ***************
+ * END HELPERS *
+ ***************
+ ***************/
+
+        </script>
+    </body>
+</html>

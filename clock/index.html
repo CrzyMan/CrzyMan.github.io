@@ -1,0 +1,99 @@
+<html>
+	<head>
+	</head>
+	
+	<body>
+		<center>
+			<h1 id="elem_time"></h1>
+			<canvas id="canvas"></canvas>
+		</center>
+		<script>
+
+var canvas = document.getElementById('canvas');
+canvas.width = 600; canvas.height = 600;
+canvas.style.border = "solid";
+var ctx = canvas.getContext('2d');
+
+var requestAnimationFrame = (function(){
+    return  window.requestAnimationFrame       || 
+            window.webkitRequestAnimationFrame || 
+            window.mozRequestAnimationFrame    || 
+            window.oRequestAnimationFrame      || 
+            window.msRequestAnimationFrame     || 
+            function( callback ){
+              window.setTimeout(callback, 1000 / 60);
+            };
+})();
+
+var monthDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+var RingClock = function(){
+	this.draw = function(){
+		ctx.lineWidth = 30;
+		ctx.lineJoin = "round";
+		ctx.strokeStyle = "red";
+		
+		var now = new Date();
+		var mo = now.getMonth()+1;
+		var d = now.getDate();
+		var h = now.getHours();
+		var m = now.getMinutes();
+		var s = now.getSeconds();
+		var ms = now.getMilliseconds();
+		
+		elem_time.innerHTML=""+(mo<10?"0":"")+mo+":"+(d<10?"0":"")+d+":"+(h<10?"0":"")+h+":"+(m<10?"0":"")+m+":"+(s<10?"0":"")+s+":"+(ms==1000?"":ms>100?"0":ms>10?"00":"000")+ms;
+		
+		// month
+		ctx.beginPath();
+		var a = mo*(2*Math.PI)/12 + d*(2*Math.PI)/12/monthDays[mo] + h*(2*Math.PI)/12/monthDays[mo]/12 + m*(2*Math.PI)/12/monthDays[mo]/24/60 + s*(2*Math.PI)/12/monthDays[mo]/24/60/60  + ms*(2*Math.PI)/12/monthDays[mo]/24/60/60/1000 - Math.PI/2;
+		ctx.arc(300,300,1*ctx.lineWidth,-Math.PI/2,a);
+		ctx.stroke();
+		ctx.closePath();
+		
+		// day
+		ctx.beginPath();
+		var a = d*(2*Math.PI)/monthDays[mo] + h*(2*Math.PI)/monthDays[mo]/12 + m*(2*Math.PI)/monthDays[mo]/24/60 + s*(2*Math.PI)/monthDays[mo]/24/60/60  + ms*(2*Math.PI)/monthDays[mo]/24/60/60/1000 - Math.PI/2;
+		ctx.arc(300,300,2.5*ctx.lineWidth,-Math.PI/2,a);
+		ctx.stroke();
+		ctx.closePath();
+		
+		// hour
+		ctx.beginPath();
+		ctx.arc(300,300,4*ctx.lineWidth,-Math.PI/2,h*(2*Math.PI)/24 + m*(2*Math.PI)/24/60 + s*(2*Math.PI)/24/60/60  + ms*(2*Math.PI)/24/60/60/1000 - Math.PI/2);
+		ctx.stroke();
+		ctx.closePath();
+		
+		// minutes
+		ctx.beginPath();
+		ctx.arc(300,300,5.5*ctx.lineWidth,-Math.PI/2,m*(2*Math.PI)/60 + s*(2*Math.PI)/60/60 + ms*(2*Math.PI)/60/60/1000 - Math.PI/2);
+		ctx.stroke();
+		ctx.closePath();
+		
+		// seconds
+		ctx.beginPath();
+		ctx.arc(300,300,7*ctx.lineWidth,-Math.PI/2,s*(2*Math.PI)/60  + ms*(2*Math.PI)/60/1000 - Math.PI/2);
+		ctx.stroke();
+		ctx.closePath();
+		
+		// milliseconds
+		ctx.beginPath();
+		ctx.arc(300,300,8.5*ctx.lineWidth,-Math.PI/2, ms*(2*Math.PI)/1000 - Math.PI/2);
+		ctx.stroke();
+		ctx.closePath();
+	}
+};
+
+var rc = new RingClock();
+
+function update(){
+    ctx.fillStyle = "black";
+	ctx.fillRect(0,0,canvas.width, canvas.height);
+	rc.draw();
+	requestAnimationFrame(update);
+}
+update();
+
+
+		</script>
+	</body>
+</html>

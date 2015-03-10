@@ -1,0 +1,623 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <title>Block Avoider</title>
+        <style>
+            canvas{
+                border: dashed;
+                background-color: white;
+                float: left;
+            }
+            
+            div.right{
+                float:right;
+                font-size: 30pt;
+            }
+        </style>
+        <script src="vectors.js"></script>
+        <script src="arrays+.js"></script>
+        <script src="pauseableTimeEvents.js"></script>
+        <script src="objects+.js"></script>
+        <script src="simpleDatabase.js"></script>
+        
+    </head>
+
+    <body style="background-color: lightgray">
+        
+        <!--[if IE 7]>
+        Sorry, this page won't work because you are using Internet Explorer... Blame Microsoft, and download Google Chrome.
+        <![endif]-->
+        
+        <![if !IE]>
+            <canvas id='canvas' width="500" height="500">
+                This Browser does not support the Canvas element. Please use a different Browser.
+            </canvas>
+            
+            <div  style="float: left; font-size: 30pt">
+                <div id="TimeNSuch"></div>
+                <br/><br/>
+                <div id="d_gameStatus"></div>
+            </div>
+            
+            
+            <div style="float: right">
+                <h1 style="font-size: 40pt"><u>Avoid The Blocks</u></h1>
+                <d style="font-size: 20pt">
+                    Click the 'Start' button and then move<br/> your mouse into the box.<br/><br/>
+                    Press 'p' to toggle pause ON and OFF.<br/>
+                </d><br/>
+                <button id="b_start" style="font-size: 20pt" onclick="startGame();">Start</button><br/><br/>
+                End Explosion Velocity Style<br/>
+                <select id="s_endStyles">
+                    <option value="norm">Normalized</option>
+                    <option value="normDist">Normalized Modified By Distance</option>
+                </select><br/>
+                <button id="b_TrON" onclick="toggleTrails();" disabled="disabled">Turn Explosion Trails On</button>
+                <button id="b_TrOFF" onclick="toggleTrails();">Turn Explosion Trails Off</button>
+                <br/><br/>
+                <br/>
+                
+                Leaders<br/>
+                <select id="s_leaders">
+                    <option value="false">No Leaders Yet</option>
+                </select>
+                
+            </div>
+            
+            <script type="text/javascript">
+                
+                // variables for drawing on the canvas and references
+                var canvas = document.getElementById('canvas');
+                var ctx = canvas.getContext('2d');
+                var canvasRect = {x: 0, y:0, width: canvas.width, height: canvas.height};
+                
+                
+                // set the time, score, multiplier, and the element they will be drawn to
+                var TimeNSuch = document.getElementById('TimeNSuch');
+                var Time = 0;
+                var Multiplier = 0;
+                var Score = 0;
+                setTimeNSuch();
+                
+                
+                // set the element to select the end style
+                var s_endStyles = document.getElementById('s_endStyles');
+                
+                
+                // set the element to show the leaders
+                var s_leaders = document.getElementById('s_leaders');
+                
+                
+                // set whether the game is currently being played (it isn't)
+                var Playing = false;
+                
+                
+                // set the frame rate of the game (64 is good)
+                var frameRate = 64;
+                
+                
+                // set that trails during the explosion are on
+                var TrailsInExplode = true;
+                
+                
+                // set the buttons that toggle trails on and off
+                var b_TrON = document.getElementById('b_TrON');
+                var b_TrOFF = document.getElementById('b_TrOFF');
+                
+                
+                // set the element to display the game status
+                var d_gameStatus = document.getElementById('d_gameStatus');
+                
+                
+                // Set the container for the game data
+                /* elements: {name, score, time} */
+                var GameData = new SimpleDatabase();
+                
+                
+                // set the diffferent styles of the explosions at the end
+                var EndStyles = {
+                    
+                    // the blocks are given a normalized vectors for velocity
+                    norm: function(){
+                        // make a new vector for the middle of the mouse
+                        var mMid = new Vector2d(mouseBox.x + 2, mouseBox.y + 2);
+                        
+                        // loop through each block
+                        for (var i = Blocks.length-1; i>=0; i--){
+                            // set b as the block
+                            var b = Blocks[i];
+                            // set a new vector as the middle of the block
+                            var bMid = new Vector2d(b.pos.x + b.width/2, b.pos.y + b.height/2);
+                            // get normalized vector of mouse to block
+                            var norm = new Vector2d(bMid.x - mMid.x, bMid.y - mMid.y).norm();
+                            // set the velocity as the normalized * 3
+                            b.vel = new Vector2d(norm.x * 3, norm.y * 3);
+                            // draw the box
+                            b.drawMe();
+                        }
+                    },
+                    
+                    // the blocks are given a normalized vector, but the further from the mouse, the slower it is
+                    normDist: function(){
+                        // new vector as the middle of the mouse
+                        var mMid = new Vector2d(mouseBox.x + 2, mouseBox.y + 2);
+                        // measure distance from corner to center, add distance from mouse to center to get max distance posible
+                        var mD = (new Vector2d(0,-25).distanceFrom(new Vector2d(canvas.width/2, canvas.height/2))) +
+                                mMid.distanceFrom(new Vector2d(canvas.height/2, canvas.width/2));
+                        
+                        // loop through each block
+                        for (var i = Blocks.length-1; i>=0; i--){
+                            // set b as the block
+                            var b = Blocks[i];
+                            // new vector for middle of the block
+                            var bMid = new Vector2d(b.pos.x + b.width/2, b.pos.y + b.height/2);
+                            // normalize the vector of mouse to block
+                            var norm = new Vector2d(bMid.x - mMid.x, bMid.y - mMid.y).norm();
+                            // get distance of mouse to block
+                            var dist = mMid.distanceFrom(bMid);
+                            /* set velocity of the block based on normal and distance
+                              * (dist/mD) gets the ratio of the distance the block is from the mouse, and the maximum distance it could be
+                              * (dist/mD) = 0 to 1; as distance -> maximum, 0 -> 1; so 1-(dist/mD), as distance -> maximum, 1 -> 0
+                              * norm.x * 3 to make it faster
+                            */
+                            b.vel = new Vector2d(norm.x * 3 * (1-(dist/mD)), norm.y * 3 * (1-(dist/mD)));
+                            // draw the block
+                            b.drawMe();
+                        }
+                    }
+                };
+                
+                // the block container and class
+                var Blocks = [];
+                function Block(){
+                    
+                    // initialize position and velocity
+                    this.pos = new Vector2d();
+                    this.vel = new Vector2d();
+                    
+                    
+                    // set height and width of the block
+                    this.width = 15 + Math.floor(Math.random() * 35);
+                    this.height = 15 + Math.floor(Math.random() * 35);
+                    
+                    
+                    /*  This is just one version, where the blocks fall, with a random x, y velocity, and start above the canvas */
+                    // set x as 'random' spot within the width of the canvas, but with a buffer past the edges
+                    this.pos.x = -5 + Math.floor(Math.random() * (canvas.width - this.width + 20));
+                    // set y so that it is just out of frame
+                    this.pos.y = -this.height;
+                    // random y velocity between 2 and 8
+                    this.vel.y = 2 + Math.floor(Math.random() * 6)
+                    /* */
+                    
+                    
+                    // adjust the velocities so that it is the same no matter frame rate
+                    this.vel.x = this.vel.x * (32/frameRate);
+                    this.vel.y = this.vel.y * (32/frameRate);
+                    
+                    
+                    // set 'random' color variable
+                    this.color = {r: Math.floor(Math.random() * 255), g: Math.floor(Math.random() * 255), b: Math.floor(Math.random() * 255)};
+                    
+                    
+                    this.drawMe = function(){
+                        ctx.save();
+                        // set fill color based on the block's color
+                        ctx.fillStyle = "rgb("+this.color.r+","+this.color.g+","+this.color.b+")";
+                        // fill a rectangle for the block
+                        ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height);
+                        // set fill color as black
+                        ctx.fillStyle = "black";
+                        // make an outline of the block
+                        ctx.strokeRect(this.pos.x, this.pos.y, this.width, this.height);
+                        ctx.restore();
+                    }
+                    
+                    this.update = function(){
+                        // add the velocity to the position
+                        this.pos._add(this.vel);
+                        
+                        
+                        // if this block isn't on the canvas, kill it
+                        if (!this.intersectsWith(canvasRect)){
+                            this.kill();
+                        }
+                        
+                        // draw this block
+                        this.drawMe();
+                    }
+                    
+                    this.kill = function(){
+                        // remove this block from the blocks container
+                        Blocks.splice(Blocks.indexOf(this),1);
+                    }
+                    
+                    // add this block to the block container
+                    Blocks.push(this);
+                }
+                
+                
+                // make a pausable interval for the tick, but then pause it
+                var i_tick = new PauseableInterval(tick, 1000/frameRate);
+                i_tick.pause();
+                
+                
+                // make a pauseable interval for making a new block every 1/10th of a second, or every 100 milliseconds, then pause it
+                var i_newBox = new PauseableInterval("new Block()", 100);
+                i_newBox.pause();
+                
+                // make a variable for the mouse's box
+                var mouseBox = {
+                    x: 0,
+                    y: 0,
+                    height: 4,
+                    width: 4,
+                    drawMe: function(){
+                        ctx.fillRect(this.x, this.y, 4, 4);
+                    }
+                };
+                
+                
+                // make pauseable interval for adding to the score, then pause it
+                var i_addTimeAndScore = new PauseableInterval(addTimeAndScore, 1000);
+                i_addTimeAndScore.pause();
+                
+                
+                // tick function is called each frame
+                function tick(){
+                    // clear the screen
+                    ctx.clearRect(0,0,canvas.width, canvas.height);
+                    
+                    // set Background for Multiplier key
+                    drawMultiplierKey();
+                    
+                    /* set the multiplier based on the mouse y position
+                      top 1/4th = 3 points, bottom 1/2 = 1 point, below top 1/4th & above bottom 1/2 = 2
+                    */
+                    if (mouseBox.y < canvas.height/4) Multiplier=3;
+                    else if (mouseBox.y >= canvas.height/2) Multiplier=1;
+                    else Multiplier=2;
+                    
+                    
+                    // update the element which contains the time, multiplier, and score
+                    setTimeNSuch();
+                    
+                    // loop through each block
+                    for (var i = Blocks.length-1; i>=0; i--){
+                        // update the block
+                        Blocks[i].update();
+                        // if the block intersects with the mouse, end the game
+                        if (Blocks[i].intersectsWith(mouseBox)){
+                            endGame();
+                            // don't do the rest of this function
+                            return;
+                        }
+                    }
+                    
+                    
+                    // draw the mouse box
+                    mouseBox.drawMe();
+                    
+                    // pause the game if the mouse is off screen
+                    if (!mouseBox.intersectsWith(canvasRect)){
+                        TogglePause();
+                    }
+                    
+                }
+                
+                // when a key is pressed
+                document.onkeypress = function(e){
+                    // if they aren't playing, leave the function
+                    if (!Playing) return;
+                    
+                    // get the code for whatever was pressed
+                    var code = e.keyCode || e.which;
+                    
+                    // if the code is 112 (a.k.a. 'p'), toggle pause
+                    switch (code){
+                        case 112:
+                            TogglePause();
+                            break;
+                    }
+                }
+                
+                function TogglePause(){
+                    // if the tick interval is going
+                    if (i_tick.i != null){
+                        // pause all of the intervals
+                        i_tick.pause();
+                        i_newBox.pause();
+                        i_addTimeAndScore.pause();
+                        
+                        // update the game status
+                        d_gameStatus.innerText = "Game Paused";
+                    }
+                    // if the tick interval is off
+                    else{
+                        // resume all of the paused intervals
+                        i_tick.resume();
+                        i_newBox.resume();
+                        i_addTimeAndScore.resume();
+                        
+                        // reset game status
+                        d_gameStatus.innerText = "";
+                    }
+                }
+                
+                
+                // when ever the mouse is moved
+                document.onmousemove = function(e){
+                    // set the mouse box's x and y based on the position of the mouse, and offset of the canvas element
+                    mouseBox.x = e.x - 12 - 2;
+                    mouseBox.y = e.y - 12 - 2;
+                }
+                
+                // set the start of the countdown, and the beginning of opacity
+                var CountDownNumber = 3;
+                var CountDownOpacity = 1;
+                
+                function startGame(){
+                    // disab;e the start button
+                    document.getElementById('b_start').disabled = true;
+                    // start the countdown
+                    fadeNumber();
+                }
+                
+                function fadeNumber(){
+                    // clear the screen
+                    ctx.clearRect(0,0,canvas.height, canvas.width);
+                    
+                    // if the countdown number hasn't reached 0 and neither has the opacity
+                    if (CountDownNumber>=0 && CountDownOpacity>=.01){
+                        // reduce opacity
+                        CountDownOpacity -= 1/100;
+                        // set timeout to do this again
+                        setTimeout(fadeNumber, 10);
+                    }
+                    // if the count down is valid, but the opacity is 0
+                    else if (CountDownNumber >= 0){
+                        // decrement the countdown number
+                        CountDownNumber--;
+                        // reset the opacity
+                        CountDownOpacity = 1;
+                        // set timeout to do this again
+                        setTimeout(fadeNumber, 10);
+                    }
+                    // if the count down is too low, and so is the opacity
+                    else {
+                        // resume the paused intervals, thus starting the game
+                        i_tick.resume();
+                        i_newBox.resume();
+                        i_addTimeAndScore.resume();
+                        
+                        Playing = true;
+                        // leave this function
+                        return;
+                    }
+                    
+                    ctx.save();
+                    // set the opacity and font of the text
+                    ctx.fillStyle = "rgba(0,0,0,"+CountDownOpacity+")";
+                    ctx.font = "40pt calibri";
+                    
+                    // if the countdown number is > 0, write the number, otherwise, write "GO!"
+                    if (CountDownNumber>0) ctx.fillText(CountDownNumber, canvas.width/2 - 20, canvas.height/2);
+                    else ctx.fillText("GO!", canvas.width/2 - 50, canvas.height/2);
+                    
+                    ctx.restore();
+                }
+                
+                // i_end is a pausable interval that is re-assigned multiple times, so no need to set it here
+                var i_end;
+                
+                function endGame(){
+                    
+                    // pick end style based on the value of the end style element
+                    EndStyles[s_endStyles.value]();
+                    
+                    // draw the mouse box
+                    mouseBox.drawMe();
+                    
+                    // pause all of the game intervals
+                    i_tick.pause();
+                    i_newBox.pause();
+                    i_addTimeAndScore.pause();
+                    
+                    // stop playing
+                    Playing = false;
+                    
+                    // assign the i_end interval for the explode method
+                    i_end = new PauseableInterval(explode, 1000/frameRate);
+                    
+                }
+                
+                function explode(){
+                    // if trails are turned off
+                    if (!TrailsInExplode){
+                        // clear the screen
+                        ctx.clearRect(0,0,canvas.width, canvas.height);
+                        // draw the multiplier key
+                        drawMultiplierKey();
+                    }
+                    
+                    // loop through the the blocks
+                    for (var i = Blocks.length-1; i>=0; i--){
+                        // update the block
+                        Blocks[i].update();
+                    }
+                    
+                    // if there are no more blocks
+                    if (Blocks.length == 0){
+                        // pause the i_end interval to pause the explode method
+                        i_end.pause();
+                        // and null it to make sure it is clear
+                        i_end = null;
+                        
+                        // reset i_end with the fade out method
+                        i_end = new PauseableInterval(fadeOut, 10);
+                        // set variable so that it knows the fade hasn't ended yet
+                        endFadeEnded = false;
+                        // set timeout to set that the fade has ended (after 1/2 a second)
+                        setTimeout("endFadeEnded = true;",500);
+                    }
+                }
+                
+                // initialize the variable to know whether the fade has ended (currently bad practice in placement seeing as it is below it's first call)
+                var endFadeEnded = false;
+                function fadeOut(){
+                    ctx.save();
+                    // set the fill style to translucent white
+                    ctx.fillStyle= "rgba(255,255,255,0.1)";
+                    // cover the canvas with the fill style
+                    ctx.fillRect(0,0,canvas.width, canvas.height);
+                    ctx.restore();
+                    
+                    // if the fade has ended
+                    if(endFadeEnded){
+                        // pause the i_end interval to pause the fade method, and nullify it
+                        i_end.pause();
+                        i_end = null;
+                        
+                        // clear the canvas and enable the 'start' button
+                        ctx.clearRect(0,0,canvas.width, canvas.height);
+                        document.getElementById('b_start').disabled = false;
+                        
+                        // reset the countdown number, opacity, and 
+                        CountDownNumber = 3;
+                        CountDownOpacity = 1;
+                        
+                        ctx.save();
+                        
+                        // write the score on the canvas
+                        ctx.font = "40pt Calibri";
+                        ctx.fillStyle = "black";
+                        ctx.fillText("Score: "+Score,0,40);
+                        ctx.restore();
+                        
+                        // get the player's name, and add it to the game data
+                        getNameAndAddToData();
+                        
+                        // reset the sore, time, multiplier, and update the element which contains these
+                        Score = 0;
+                        Time = 0;
+                        Multiplier = 0;
+                        setTimeNSuch();
+                    }
+                }
+                
+                function setTimeNSuch(){
+                    // make a string containing time, multiplier, and score
+                    var str = "Time: " + Time + "<br/>Multiplier: " + Multiplier + "<br/>Score: " + Score;
+                    // set the element's internal HTML as this string
+                    TimeNSuch.innerHTML = str;
+                }
+                
+                function addTimeAndScore(){
+                    // increment the time
+                    Time++;
+                    // add the multiplier to the score
+                    Score += Multiplier;
+                }
+                
+                function toggleTrails(){
+                    // if trails are on, turn them off, otherwise, turn them on
+                    if (TrailsInExplode) TrailsInExplode=false;
+                    else TrailsInExplode=true;
+                    
+                    // enable or disable the buttons which toggle trails, based on whether trails are on or not
+                    b_TrON.disabled = TrailsInExplode;
+                    b_TrOFF.disabled = !TrailsInExplode;
+                }
+                
+                function drawMultiplierKey(){
+                    // set Background for Multiplier key
+                    ctx.save();
+                    // pale green for top 1/4 of canvas
+                    ctx.fillStyle = "rgba(0,255,0,.5)";
+                    ctx.fillRect(0,0,canvas.width, canvas.height/4);
+                    
+                    // pale yellow for second 1/4 from the top
+                    ctx.fillStyle = "rgba(255,255,0,.5)";
+                    ctx.fillRect(0,canvas.height/4, canvas.width, canvas.height/4);
+                    
+                    // pale red for the bottom half
+                    ctx.fillStyle = "rgba(255,0,0,.5)";
+                    ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height);
+                    ctx.restore();
+                }
+                
+                function getNameAndAddToData(){
+                    // ask what the player's name is
+                    var p = prompt("What is you name?")
+                    // if they don't answer, or answer just spaces
+                    if (!p || !p.split(" ").join("")){
+                        // order and display the game data in the s_leaders element
+                        orderAndDisplayGameData();
+                        // leave this method
+                        return;
+                    }
+                    
+                    // try to grab the player by supplied name from game data, it is false if there isn't a player with that name
+                    var player = GameData.getElementByProperty("name", p);
+                    
+                    // if the player already exists
+                    if (player){
+                        // if the score in the database is more than the score of this game
+                        if (player.score > Score){
+                            // confirm if the player wants to overwrite it
+                            var v = confirm("Your score this game is lower than what is in the database.\nWould you like to overwrite your last score?")
+                            // if they want to overwrite
+                            if (v){
+                                // update the player's score and time
+                                player.score = Score;
+                                player.time = Time;
+                            } // if they don't want to overwrite, don't do anything
+                        }
+                        // if the score this game is more than in the database
+                        else {
+                            // update the player's score and time
+                            player.score = Score;
+                            player.time = Time;
+                        }
+                    }
+                    // if ther player doesn't exist in the database, add them to the database
+                    else {
+                        GameData.add({name: p, score: Score, time: Time})
+                    }
+                    
+                    orderAndDisplayGameData();
+                }
+                
+                function orderAndDisplayGameData(){
+                    // order the game data descending by time
+                    GameData.orderBy("time", true);
+                    // order the game data descending by score
+                    GameData.orderBy("score", true);
+                    /* now the database is organized by score then time */
+                    
+                    // if there is data in the game data, clear the s_leaders element
+                    if (GameData.db.length > 0) s_leaders.innerHTML = "";
+                    
+                    // loop through each player in the game data
+                    for (var i = 0; i < GameData.db.length; i++){
+                        // add each player's data to the s_leaders element
+                        s_leaders.innerHTML += "<option>Name: "+GameData.db[i].name+" | Score: "+GameData.db[i].score+" | Time: "+GameData.db[i].time;
+                    }
+                }
+                
+                
+                /*****************************
+                 *    START TESTING AREA     *
+                 *****************************/
+                
+                
+                
+                /*****************************
+                 *     END TESTING AREA      *
+                 *****************************/
+                
+            </script>
+        <![endif]>
+    </body>
+</html>

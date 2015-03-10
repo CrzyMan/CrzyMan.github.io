@@ -1,0 +1,68 @@
+.radial-progress {
+          width:  150px;
+          height: 150px;
+          
+          background-color: grey;
+          border-radius: 50%;
+     }
+     .mask, .fill {
+          width:    150px;
+          height:   150px;
+          position: absolute;
+          border-radius: 50%;
+          -webkit-backface-visibility: hidden;
+          border-radius: 50%;
+     }
+     
+     .maskR{
+          width:    150px;
+          height:   150px;
+          position: absolute;
+          border-radius: 50%;
+          -webkit-backface-visibility: hidden;
+          border-radius: 50%;
+          position: absolute;
+          clip: rect(0px, 150px, 150px, 75px);
+     }
+     
+     .maskL {
+          width:    150px;
+          height:   150px;
+          position: absolute;
+          border-radius: 50%;
+          -webkit-backface-visibility: hidden;
+          border-radius: 50%;
+          position: absolute;
+          clip: rect(0px, 75px, 150px, 0px);
+     }
+     
+     .fill {
+          position: absolute;
+          background-color: red;
+          clip: rect(0px, 75px, 150px, 0px);
+     }
+     
+     .inset {
+          width:       120px;
+          height:      120px;
+          position:    absolute;
+          margin-left: 15px;
+          margin-top:  15px;
+
+          background-color: white;
+          border-radius: 50%;
+     }
+     
+     .timecentage {
+          height: 120px;
+          width: 120px;
+          font-size: 20pt;
+          text-align: center;
+     }
+     
+     span {
+          display: inline-block;
+          vertical-align: middle;
+          text-align: center;
+          line-height: 120px;
+     }

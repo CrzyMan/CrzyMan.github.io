@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Page Title</title>
+    </head>
+
+    <body onload="initialize()">
+    <button id="b_start">Start</button>
+    <button id="b_step">Step</button>
+    <button id="b_reset">Reset</button>
+    <button id="b_cow">Cow</button><br/>
+    <button id="b_save">Save Picture</button>
+    <button id="b_load">Load Picture</button>
+    <input id="i_pic" type="text" />
+    <br/>
+    
+        <script>
+
+// set title
+document.title = "Game Of Life";
+
+// Background canvas
+var c_bg = document.createElement('canvas');
+c_bg.style.position = "absolute";
+c_bg.style.border = "solid";
+c_bg.c = c_bg.getContext('2d');
+
+// Canvas that will be drawn to
+var c_Main = document.createElement('Canvas');
+c_Main.style.position = "absolute";
+c_Main.style.border = "solid";
+c_Main.c = c_Main.getContext('2d');
+c_Main.onclick = handleClick;
+
+// add the canvases to the page
+document.body.appendChild(c_bg);
+document.body.appendChild(c_Main);
+
+// Make the button stuff
+var b_start = document.getElementById('b_start');
+var running = false;
+b_start.onclick = function(){
+    running = !running;
+    if(running){
+        b_start.textContent = "Stop";
+        gameLoop();
+    }
+    else{
+        b_start.textContent = "Start";
+        stopAnimation();
+    }
+};
+
+var b_step = document.getElementById('b_step');
+var runOnce = false;
+b_step.onclick = function(){
+    runOnce = true;
+    gameLoop();
+}
+
+var b_reset = document.getElementById('b_reset');
+b_reset.onclick = function(){
+    stopAnimation();
+    resetMatrices();
+    c_Main.c.clearRect(0,0,WIDTH,HEIGHT);
+}
+
+var b_cow = document.getElementById('b_cow');
+var cowString = "15,36;16,35;16,37;16,39;17,35;17,36;17,38;18,35;18,36;18,37;19,35;19,36;20,35;20,36;21,35;21,36;22,35;22,36;23,35;23,36;23,44;23,45;23,46;23,47;23,48;23,49;23,50;23,51;23,52;24,35;24,36;24,42;24,43;24,53;25,36;25,37;25,41;25,52;25,53;25,54;25,55;25,56;25,57;25,63;25,64;25,65;26,37;26,38;26,39;26,40;26,41;26,51;26,58;26,62;26,66;27,38;27,39;27,40;27,41;27,50;27,59;27,60;27,61;27,67;28,40;28,49;28,68;29,40;29,69;29,70;29,71;30,40;30,65;30,70;30,71;31,40;31,64;31,66;31,70;31,71;32,39;32,63;32,64;32,67;32,70;32,71;33,39;33,63;33,65;33,68;33,69;33,70;33,71;34,39;34,63;34,66;35,39;35,50;35,51;35,52;35,62;35,63;35,64;35,67;35,68;36,39;36,49;36,50;36,51;36,52;36,53;36,60;36,61;36,63;36,65;36,67;36,68;37,39;37,49;37,50;37,51;37,52;37,53;37,54;37,59;37,63;37,66;37,67;37,68;38,39;38,50;38,51;38,52;38,53;38,54;38,58;38,62;39,39;39,52;39,53;39,54;39,55;39,56;39,57;39,61;40,38;40,57;40,58;40,59;40,60;41,38;41,57;42,38;42,39;42,57;43,38;43,39;43,40;43,58;44,38;44,39;44,40;44,41;44,58;45,38;45,39;45,40;45,41;45,42;45,57;45,59;45,60;46,38;46,39;46,40;46,41;46,42;46,57;46,59;47,38;47,39;47,40;47,41;47,42;47,57;47,59;48,38;48,39;48,40;48,41;48,42;48,57;48,59;48,60;49,38;49,39;49,40;49,41;49,57;49,59;50,38;50,39;50,40;50,57;50,59;50,60;51,38;51,39;51,40;51,58;52,38;52,39;52,40;52,41;52,58;53,38;53,39;53,40;53,41;53,58;54,38;54,39;54,40;54,56;54,57;55,38;55,39;55,55;55,61;56,38;56,55;56,57;56,58;56,59;56,60;56,62;57,38;57,55;57,56;57,63;58,38;58,55;58,64;59,39;59,55;59,61;59,62;59,65;59,66;59,67;59,68;60,39;60,53;60,54;60,55;60,56;60,57;60,60;60,63;60,67;60,68;61,39;61,51;61,52;61,58;61,59;61,61;61,62;61,64;61,67;61,68;62,39;62,59;62,60;62,63;62,65;62,66;62,67;62,68;63,39;63,64;64,30;64,31;64,32;64,33;64,34;64,35;64,36;64,37;64,39;64,65;65,29;65,38;65,39;65,66;66,28;66,31;66,32;66,61;66,67;67,27;67,31;67,33;67,48;67,60;67,62;67,68;67,69;67,70;67,71;68,25;68,26;68,27;68,31;68,33;68,44;68,49;68,50;68,57;68,58;68,59;68,63;68,69;68,70;68,71;69,24;69,43;69,44;69,45;69,51;69,52;69,53;69,54;69,55;69,56;69,63;69,69;69,70;69,71;70,25;70,42;70,43;70,44;70,45;70,46;70,51;70,63;70,69;70,70;70,71;71,25;71,26;71,31;71,32;71,42;71,43;71,44;71,45;71,46;71,50;71,64;71,68;71,69;71,70;71,71;72,25;72,27;72,31;72,32;72,40;72,41;72,42;72,43;72,44;72,45;72,46;72,47;72,48;72,49;72,65;72,66;72,67;73,24;73,25;73,40;74,23;74,25;74,40;75,24;75,25;75,26;75,40;76,27;76,35;76,39;77,28;77,35;77,38;78,28;78,35;78,38;79,28;79,35;79,36;79,37;80,28;80,30;80,31;80,35;81,29;81,34;82,30;82,31;82,32;82,33;";
+b_cow.onclick = function(){
+    loadImageString(cowString);
+}
+
+var i_pic = document.getElementById('i_pic');
+var b_save = document.getElementById('b_save');
+b_save.onclick = function(){
+    saveImageString();
+}
+
+var b_load = document.getElementById('b_load');
+b_load.onclick = function(){
+    loadImageString(i_pic.value);
+}
+
+// set a global width and height
+var WIDTH = HEIGHT = 800;
+
+var mWIDTH = mHEIGHT = 100;
+var dx = dy = (WIDTH-20)/mWIDTH;
+
+// set the height and width of the canvases
+c_bg.width = c_Main.width = WIDTH;
+c_bg.height = c_Main.height = HEIGHT;
+
+// the id for the requestAnimationFrame
+var reqAnimFrameId = 0;
+
+// Quick for-each-loop that runs in reverse
+Array.prototype.forEachQuickR = function(callback){
+    var i = this.length-1;
+    while (i >= 0){
+        callback(this[i]);
+        i--;
+    }
+}
+
+// guick for-each-loop that runs in reverse, and passes the element, index, and arguments to the callback
+Array.prototype.forEachQuickRI = function(callback, args){
+    var i = this.length-1;
+    while (i >= 0){
+        callback(this[i], i, args)
+        i--;
+    }
+}
+
+// guick for-each-loop that runs in reverse, and passes the element, index, and arguments to the callback, for a 2d array
+Array.prototype.forEachQuickRI2D = function(callback, args){
+    var x = this.length-1;
+    var y;
+    while (x >= 0){
+        y = this[x].length-1;
+        while (y >= 0){
+            callback(this[x][y], x, y, args);
+            y--;
+        }
+        x--;
+    }
+}
+
+var matrix1 = [];
+var matrix2 = [];
+var is1 = true;
+
+var rules = {
+    lessThan: 2,
+    moreThan: 3,
+    birth: 3,
+}
+
+function resetMatrices(){
+    matrix1 = [];
+    matrix2 = [];
+    for (var i = 0; i < 100; i++){
+        matrix1.push([])
+        matrix2.push([])
+        for (var ii = 0; ii < 100; ii++){
+            matrix1[i].push(0);
+            matrix2[i].push(0);
+        }
+    }
+}
+
+function drawBackground(){
+    c_bg.c.lineWidth = 0.5;
+    c_bg.c.beginPath();
+    for (var i = 0; i < 101; i++){
+        c_bg.c.moveTo(10, 10+i*dy);
+        c_bg.c.lineTo(WIDTH-10, 10+i*dy);
+        c_bg.c.moveTo(10+i*dx, 10);
+        c_bg.c.lineTo(10+i*dx, HEIGHT-10);
+    }
+    c_bg.c.stroke();
+}
+
+// currently starts a new round, I should change that, or rename it
+function initialize(){    
+    c_Main.c.clearRect(0,0,WIDTH,HEIGHT);
+    c_bg.c.clearRect(0,0,WIDTH,HEIGHT);
+    drawBackground();
+    resetMatrices();
+    matrix1[52][0] = 1;
+    matrix1[53][1] = 1;
+    matrix1[53][2] = 1;
+    matrix1[52][2] = 1;
+    matrix1[51][2] = 1;
+    
+    matrix1.forEachQuickRI2D(drawMatrix, c_Main.c);
+    
+}
+
+function gameLoop(){
+    
+    c_Main.c.clearRect(0,0,WIDTH,HEIGHT);
+    if (is1){
+        matrix1.forEachQuickRI2D(calcToBuff, [matrix1, matrix2]);
+        matrix2.forEachQuickRI2D(drawMatrix, c_Main.c);
+    } else {
+        matrix2.forEachQuickRI2D(calcToBuff, [matrix2, matrix1]);
+        matrix1.forEachQuickRI2D(drawMatrix, c_Main.c);
+    }
+    
+    is1 = !is1;
+    if (!runOnce)
+        reqAnimFrameId = window.requestAnimationFrame(gameLoop);
+    else
+        runOnce = false;
+}
+
+// stop the animation so that you can only restart it by calling the gameLoop
+//      TODO probably make a restartAnimation function
+function stopAnimation(){
+    running = false;
+    b_start.textContent = "Start";
+    window.cancelAnimationFrame(reqAnimFrameId);
+}
+
+function handleClick(e){
+    var x = Math.floor((e.x - c_Main.offsetLeft + 3)/dx) - 2;
+    var y = Math.floor((e.y - c_Main.offsetTop + 5)/dy) - 2;
+    if (is1){
+        if (matrix1[x][y] == 0){
+            matrix1[x][y] = 1;
+            drawMatrix(matrix1[x][y], x, y, c_Main.c);
+            //c_Main.c.fillRect(10+x*dx,10+y*dy,dx,dy);
+        } else {
+            matrix1[x][y] = 0;
+            c_Main.c.clearRect(10+x*dx,10+y*dy,dx,dy);
+        }
+    } else {
+        if (matrix2[x][y] == 0){
+            matrix2[x][y] = 1;
+            c_Main.c.fillRect(10+x*dx,10+y*dy,dx,dy);
+        } else {
+            matrix2[x][y] = 0;
+            c_Main.c.clearRect(10+x*dx,10+y*dy,dx,dy);
+        }
+    }
+}
+
+function randomColor(){
+    return "#"+Math.floor(Math.random()*16777215).toString(16);
+}
+
+function drawMatrix(val, x, y, ctx){
+    if (val == 1){
+        ctx.fillRect(10+x*dx,10+y*dy,dx,dy);
+    }
+}
+
+function calcToBuff(val, x, y, args){
+    var front = args[0];
+    var buff = args[1];
+    
+    var count = 0;
+    for (var i = -1; i <= 1; i++){
+        for (var ii = -1; ii <= 1; ii++){
+            if (i==0 && ii==0)
+                continue;
+            count += front[(x+i+mWIDTH)%mWIDTH][(y+ii+mHEIGHT)%mHEIGHT];
+        }
+    }
+    /* *
+    if (x == 1 && y == 0){
+        console.log("FDS");
+    }
+    /* */
+    
+    if (count > rules.moreThan){
+        buff[x][y] = 0;
+        return;
+    }
+    
+    if (val == 1){
+        if (count < rules.lessThan){
+            buff[x][y] = 0;
+        } else {
+            if (count > rules.moreThan){
+                buff[x][y] = 0;
+            } else {
+                buff[x][y] = 1;
+            }
+        }
+    } else {
+        if (count == rules.birth) {
+            buff[x][y] = 1;
+        } else {
+            buff[x][y] = 0;
+        }
+    }
+}
+
+function addToList(val, x, y, list){
+    if (val == 1)
+        list.push( x + "," + y + ";");
+}
+
+function saveImageString(){
+    list = [];
+    
+    if(is1)
+        matrix1.forEachQuickRI2D(addToList, list);
+    else
+        matrix2.forEachQuickRI2D(addToList, list);
+    
+    i_pic.value = "";
+    for (var i = 0; i < list.length; i++){
+        i_pic.value += list[i];
+    }
+}
+
+function loadImageString(str){
+    stopAnimation();
+    resetMatrices();
+    c_Main.c.clearRect(0,0,WIDTH,HEIGHT);
+    var points = str.split(";");
+    var length = points.length;
+    for (var po = 0; po < length -1; po++){
+        var p = points[po].split(",");
+        if (p.length == 2){
+            if (is1){
+                matrix1[p[0]][p[1]] = 1;
+            } else {
+                matrix2[p[0]][p[1]] = 1;
+            }
+        }
+    }
+    if (is1)
+        matrix1.forEachQuickRI2D(drawMatrix, c_Main.c);
+    else
+        matrix2.forEachQuickRI2D(drawMatrix, c_Main.c);
+}
+
+        </script>
+    
+    </body>
+</html>

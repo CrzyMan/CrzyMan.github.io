@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Space Invaders</title>
+		<style>
+			canvas{
+				border: solid;
+				background-color: black;
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
+			}
+		</style>
+		
+		<!-- Import external scripts -->
+			<script src="arrays+.js"></script>
+			<script src="vectors.js"></script>
+			<script src="objects+.js"></script>
+			<script src="pauseableTimeEvents.js"></script>
+            <script src="animatedSprite.js"></script>
+		<!-- -->
+		
+    </head>
+    
+	<body onload="" bgColor="grey">
+		<!-- loading area -->
+			<img src="spriteSheet.png" id="img_spriteSheet" hidden="true"/>
+		<!-- -->
+		
+        <canvas id='canvas'>
+			This Browser Does Not Support Canvas.
+		</canvas>
+    </body>
+	
+    <script>
+        /************************ TO DO ******************************\
+         *
+         *
+         *
+         *
+        \*************************************************************/
+        
+		/* initialization of variables */
+		
+		// stuff for drawing
+		var canvas = document.getElementById('canvas');
+		var ctx = canvas.getContext('2d');
+		ctx.fillStyle = "white";
+		
+		
+		canvas.height = 560;//window.innerHeight - 30;
+		canvas.width = 1250;//window.innerWidth - 30;
+		
+		
+		var frameRate = 32;
+		// set up interval for each tick
+		var t = null;
+		
+		
+		// set up timeouts/intervals
+		var i_motherShip = null;
+		var t_FireAtPlayer = null;
+		
+		
+		/* for images */
+		
+		var sprites = {
+            alien1: null,
+            alien2: null,
+            alien4: null,
+            
+            motherShip: null,
+			
+            boss3: null,
+            
+            bullet: null,
+            
+            explosion: null,
+        }
+        
+        var img_spriteSheet = document.getElementById('img_spriteSheet');
+        img_spriteSheet.onload = function(){
+            sprites.alien1 = new AnimatedSprite({image: this, frameCount: 2, fps: 2, sourceY: 0, frameWidth: 10, frameHeight: 10});
+			sprites.alien2 = new AnimatedSprite({image: this, frameCount: 2, fps: 2, sourceY: 0, frameWidth: 10, frameHeight: 10});
+			sprites.alien4 = new AnimatedSprite({image: this, frameCount: 2, fps: 2, sourceY: 0, frameWidth: 10, frameHeight: 10});
+			sprites.motherShip = new AnimatedSprite({image: this, frameCount: 6, fps: 6, sourceY: 10, frameWidth: 30, frameHeight: 15});
+			sprites.boss3 = new AnimatedSprite({image: this, frameCount: 3, fps: 6, sourceY: 25, frameWidth: 90, frameHeight: 60});
+        }
+        
+		/* */
+        
+		
+		// the levels
+		var LEVEL = 1;
+		var enemyLevelClusters = [// level 1
+							 [[1,1,1,1,1,1,1,1],
+							  [1,0,0,1,1,0,0,1],
+							  [1,1,1,1,1,1,1,1]],
+							 
+							 // level 2
+							 [[0,0,0,2,0,0,0,0],
+							  [0,0,0,0,0,0,0,0],
+							  [0,0,1,1,1,1,0,0]],
+							 
+							 // level 3, boss
+							 [[3]],
+							 
+							 // level 4
+							 [[2],
+							  [0,0],
+							  [1,1]]
+							 
+							 ];
+        
+        // other game variables
+        var SCORE = 0;
+        var LIVES = 5;
+		
+		// Pause Stuff
+		var Paused = false;
+		var canTogglePause = true;
+		var Playing = false;
+		
+		// fireing stuff
+		var canFire = true;
+		
+		// key detection
+		var Keys = {left: 37, up: 38, right: 39, down: 40, p: 80, w: 87};
+		var PressedKeys = {left: false, up: false, right: false};
+		document.onkeydown = function(e){
+			var code = e.keyCode || e.which;
+			if (Playing){
+				switch (code){
+					case Keys.up:
+						PressedKeys.up = true;
+						break;
+					case Keys.left:
+						PressedKeys.left = true;
+						break;
+					case Keys.right:
+						PressedKeys.right = true;
+						break;
+					case Keys.p:
+						TogglePaused();
+						break;
+					case Keys.w:
+						Enemies = [];
+						break;
+					default:
+						//alert(code);
+						break;
+				}
+			} else {
+				if (code == Keys.p){
+					Playing = true;
+					LEVEL = 1;
+					resetAll();
+					startLevel(LEVEL);
+				}
+			}
+		}
+		document.onkeyup = function(e){
+			var code = e.keyCode || e.which;
+			switch (code){
+				case Keys.up:
+					PressedKeys.up = false;
+					break;
+				case Keys.left:
+					PressedKeys.left = false;
+					break;
+				case Keys.right:
+					PressedKeys.right = false;
+					break;
+				case Keys.p:
+					canTogglePause = true;
+					break;
+				default:
+					break;
+			}
+		}
+		
+		/* */
+		
+		
+		/* Boss Class */
+		var boss = null;
+		function Boss(health){
+			
+			// make position and velocity
+			this.pos = new Vector2d(50,50);
+			this.vel = new Vector2d();
+			
+			// set width and height
+			this.width = 150;
+			this.height = 90;
+			
+			// set Health, it will take 20 hits unless specified in parameters
+			this.health = health!=null? health : 20;
+			
+			// update for each tick
+			this.update = function(){
+				// update position based on velocity
+				this.pos._add(this.vel);
+				
+				// draw it
+				this.drawMe();
+			}
+			
+			// draws it
+			this.drawMe = function(){
+				ctx.save();
+				//ctx.fillStyle = "white";
+				//ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height);
+				sprites["boss"+LEVEL].drawMe(this.pos.x, this.pos.y, this.width, this.height);
+				ctx.restore();
+			}
+			
+			boss = this;
+		}
+		/* */
+		
+		
+		/* MotherShip Class */
+		var daMotherShip = null;
+		function MotherShip() {
+			
+			// set interval if null
+			if (i_motherShip== null) i_motherShip = new PauseableInterval("new MotherShip()", 10*1000);
+			
+			// set up position property
+			this.pos = new Vector2d(0,25);
+			
+			// set up velocity
+			this.vel = new Vector2d(3,0)
+			
+			// default size
+			this.width = 160;
+			this.height = 80;
+			
+			this.pos.x = -this.width;
+			this.vel.x = 5;
+			
+			// function to draw this enemy
+			this.drawMe = function(){
+				ctx.save();
+				//ctx.fillStyle="white";
+				//ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height)
+				sprites.motherShip.drawMe(this.pos.x, this.pos.y, this.width, this.height);
+				ctx.restore();
+			};
+			
+			// update per tick
+			this.update = function(){
+				
+				// kill when off screen
+				if (this.pos.x>canvas.width + this.width){
+					daMotherShip = null;
+				}
+				
+				this.pos._add(this.vel)
+				
+				this.drawMe();
+			}
+			
+			// add this enemy to the array containing all enemies
+			daMotherShip = this;
+		}
+		/**/
+		
+		
+		/* Enemy Class */
+		var Enemies = [];
+		var EnemyOffsetRef = 0;
+		function Enemy(x, y) {
+			
+            this.id = Enemies.length;
+			
+			var str = "alien"+LEVEL+"";
+            sprites[str].restartAnimation();
+			
+			// set up position property
+			this.pos = new Vector2d();
+			
+			// uses supplied x if not null, otherwise determined by id
+			this._x = x!=null ? x : this.id % 8;
+			this.pos.x = 25 + this._x * 60;
+			
+			// uses supplied y if not null, otherwise determined by id
+			this._y = y!=null ? y : Math.floor(this.id / 8);
+			this.pos.y = 75 + this._y * 50;
+			
+			// set up velocity
+			this.vel = new Vector2d(3,0)
+			
+			// default size
+			this.width = 30;
+			this.height = 30;
+			
+			// function to draw this enemy
+			this.drawMe = function(){
+				ctx.save();
+				//ctx.fillStyle="white";
+				//ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height)
+                sprites["alien"+LEVEL].drawMe(this.pos.x, this.pos.y, this.width, this.height);
+				ctx.restore();
+			};
+			
+			// update per tick
+			this.update = function(){
+				
+				// bounce off imaginary walls
+				if (this.pos.x - this._x * 60 + 25 >= 780 || this.pos.x - this._x * 60 <= 24){
+					this.vel.x = this.vel.x * -1;
+				}
+				
+				this.pos._add(this.vel)
+				
+				this.drawMe();
+			}
+			
+			this.fire = function(){
+				// make a bullet with a position of exactly the middle of the enemy, and a velocity of 5 going down
+				new Bullet(new Vector2d(this.pos.x + this.width/2 - 10/2, this.pos.y+this.height-20), new Vector2d(0,10), true);
+				t_FireAtPlayer = null;
+			}
+			
+			// add this enemy to the array containing all enemies
+			Enemies.push(this);
+		}
+		/**/
+		
+		
+		/* Bullet Class */
+		var Bullets = [];
+		var BulletIdRef = 0;
+		function Bullet(pos, vel, isBomb) {
+			this.id = BulletIdRef++;
+			
+			// set position and velocity
+			this.pos = pos || new Vector2d(0,0);
+			this.vel = vel || new Vector2d(0,0);
+			
+			this.height = 20;
+			this.width = 10;
+			
+			// update for each tick
+			this.update = function (){
+				
+				// move based on vel
+				this.pos._add(this.vel);
+				
+				// remove from Bullets and stop function if offscreen
+				if (this.pos.y + this.height < 0 || this.pos.y >= canvas.height){
+					Bullets.splice(Bullets.indexOf(this), 1);
+					return;
+				}
+				
+				// make collision logic here, going in reverse ensures that all enemies are checked
+				if (!isBomb){
+					for (var i = Enemies.length - 1; i >= 0; i--){
+						if (this.intersectsWith(Enemies[i])){
+							Enemies.splice(i,1);
+							Bullets.splice(Bullets.indexOf(this),1);
+                            SCORE++;
+							return;
+						}
+					}
+					
+					// if there is a mother ship
+					if (daMotherShip != null){
+						if (this.intersectsWith(daMotherShip)){
+							daMotherShip = null;
+							Bullets.splice(Bullets.indexOf(this),1);
+                            SCORE+= 10;
+							return;
+						}
+					}
+					
+					// if fighting a boss
+					if (boss != null){
+						// if you hit the boss
+						if (this.intersectsWith(boss)){
+							// take away boss health
+							boss.health--;
+							if (boss.health == 0){
+								boss = null;
+                                SCORE += 50;
+							}
+							Bullets.splice(Bullets.indexOf(this),1);
+							return;
+						}
+					}
+				} else
+				// check if colliding with the player if it is a bomb
+				{
+					if (this.intersectsWith(player)){
+						console.log('you died');
+						Bullets.splice(Bullets.indexOf(this),1);
+                        LIVES--;
+					}
+				}
+				
+				
+				
+				// draw it
+				this.drawMe();
+				
+			};
+			
+			// function to draw this bullet
+			this.drawMe = function(){
+				ctx.save();
+				ctx.fillStyle="white";
+				ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height)
+				ctx.restore();
+			};
+			
+			Bullets.push(this);
+		}
+		/* */
+		
+		
+		/* Player Class */
+		var player = new Player();
+		function Player(){
+			
+			this.reset = function(){
+				this.width = 30;
+				this.pos = new Vector2d((canvas.width / 2) - (this.width / 2), canvas.height - 5 - this.width);
+				this.vel = new Vector2d();
+				this.maxSpeed = 10;
+			}
+			
+			
+			this.width = 30;
+			this.height = 30;
+			
+			this.pos = new Vector2d((canvas.width / 2) - (this.width / 2), canvas.height - 5 - this.width);
+			this.vel = new Vector2d();
+			
+			this.maxSpeed = 10;
+			
+			this.drawMe = function(){
+				ctx.save();
+				ctx.fillStyle="white";
+				ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height)
+				ctx.restore();
+			}
+			
+			this.update = function(){
+				
+				/* update velocity */
+				if (PressedKeys.left){
+					this.vel.x -= (this.vel.x > -this.maxSpeed)*(this.maxSpeed/4);
+				}
+				if (PressedKeys.right){
+					this.vel.x += (this.vel.x < this.maxSpeed)*(this.maxSpeed/4);
+				}
+				/* */
+				
+				
+				// fire
+				if (PressedKeys.up && canFire){
+					
+					// fire
+					this.fire();
+					
+					// no spamming the trigger
+					canFire = false;
+					window.setTimeout("canFire = true;",500);
+					
+					// make it automatic
+					PressedKeys.up = false;
+				}
+				
+				
+				// update position
+				this.pos._add(this.vel);
+				
+				
+				// make sure it doesn't go out of bounds
+				if (this.pos.x > canvas.width - this.width || this.pos.x < 0){
+					this.pos.x = (canvas.width - this.width) * (this.pos.x > canvas.width - this.width);
+					this.vel.x = 0;
+				}
+				
+				
+				// slow it down
+				this.vel.x = this.vel.x * 0.9;
+				
+				
+				// draw it
+				this.drawMe();
+			}
+			
+			this.fire = function(){
+				// make a bullet with a position of exactly the middle of the Player, and a velocity of 10 going up
+				new Bullet(new Vector2d(this.pos.x + this.width/2 - 10/2, this.pos.y), new Vector2d(0,-10));
+			}
+		}
+		/* */
+		
+		
+		
+		
+		/*******************\
+		|*******************|
+		|*******************|
+		|*******************|
+		|*******************|
+		\*******************/
+		
+		
+		// the actual tick function
+		function tick(){
+			// don't tick if paused
+			if (Paused) return;
+			
+			// clear the screen
+			ctx.clearRect(0,0,canvas.width, canvas.height);
+			
+			
+			// set when and which enemy will fire next
+			if (t_FireAtPlayer == null){
+				// picks a "random" enemy
+				var daEnemy = Math.floor(Math.random() * Enemies.length);
+				// picks time between 5 and 10 seconds
+				var interval = 2000 + Math.floor(Math.random() * 2 * 1000);
+				// set the timeout
+				t_FireAtPlayer = new PauseableTimeout("EnemyFiringHandler("+daEnemy+");", interval);
+			}
+			
+			
+			// (find way to update all bullets and enemies in same loop)
+			// update all enemies
+			for (var i = 0; i < Enemies.length; i++){
+				Enemies[i].update();
+			}
+			
+			// if there is a mothership
+			if (daMotherShip != null){
+				daMotherShip.update();
+			}
+			
+			// leave if Not playing
+			if (!Playing) {
+                player.drawMe();
+                
+                // make main screen
+                ctx.save();
+                ctx.fillStyle = "rgba(0,0,0,.3)";
+                ctx.fillRect(0,0,canvas.width, canvas.height);
+                
+                ctx.fillStyle = "rgba(150,150,150,.8)";
+                ctx.fillRect(canvas.width / 2 - 320, canvas.height / 2 - 80, 560, 160);
+                    
+                ctx.fillStyle = "White";
+                ctx.font = "60pt Calibri"
+                ctx.fillText("Press 'p' To Play",canvas.width/2 - 300, canvas.height/2 + 20);
+                
+                ctx.restore();
+                
+                return;
+            }
+			
+			// if there is a boss
+			if (boss != null){
+				boss.update();
+			}
+			
+			// update all Bullets, going in reverse insures that all bullets are updated
+			// a bullet would be skipped if the one before it was spliced, unless caught and coded for, reverse is just easier
+			for (var i = Bullets.length - 1; i >= 0; i--){
+				Bullets[i].update();
+			}
+			
+			
+			// update the Player
+			player.update();
+            
+            
+            // update stuff written on screen
+            ctx.save();
+            ctx.fillStyle = "white";
+            ctx.font = "16pt Calibri";
+            ctx.fillText("Score: "+SCORE+"    Lives: "+LIVES,0,16);
+            ctx.restore();
+			
+			
+			// check if win
+			if (Enemies.length==0 && boss==null){
+				resetAll();
+				player.drawMe();
+				alert("!!!  YOU WIN  !!!");
+				LEVEL++;
+				
+				if (LEVEL <= enemyLevelClusters.length){
+					startLevel(LEVEL);
+				} else {
+					alert("!!!! GAME OVER !!!!");
+					SetHomeScreen();
+				}
+				
+			}
+		}
+		
+		
+		/*******************\
+		|*******************|
+		|*******************|
+		|*******************|
+		|*******************|
+		\*******************/
+		
+		
+		
+		
+		// hey there
+		function startLevel(level){
+			resetAll();
+			
+			var levelGrid = enemyLevelClusters[level - 1];
+			// loop through each position in grid
+			for (var i = 0; i < levelGrid.length; i++){
+				for (var ii = 0; ii < levelGrid[i].length; ii++){
+					// if the position is on, make an enemy their
+					if (levelGrid[i][ii] == 3) {new Boss();}
+					else if (levelGrid[i][ii] == 2) {new MotherShip();}
+					else if (levelGrid[i][ii] == 1) {new Enemy(ii,i);}
+				}
+			}
+			
+			t = window.setInterval(tick, 1000/32);
+		}
+		
+		function resetAll(){
+			// move Player back
+			player.reset();
+			
+			canFire = true;
+			
+			// empty arrays
+			Enemies = [];
+			Bullets = [];
+			
+			// clear the screen
+			ctx.clearRect(0,0,canvas.width, canvas.height);
+			
+			// turn off all intervals/timeouts
+			window.clearInterval(t);
+			if (t_FireAtPlayer!=null) t_FireAtPlayer.clearTimeout();
+            t_FireAtPlayer = null;
+            if (i_motherShip!=null) i_motherShip.clearInterval();
+            i_motherShip = null;
+			canMotherShip = false;
+            
+            // nullify enemies
+            daMotherShip = null;
+            boss = null;
+			
+		}
+		
+		
+		function TogglePaused(){
+			// leave if you can't toggle
+			if (!canTogglePause) {
+				return;
+			}
+			
+			// toggle Paused
+			Paused = Paused ? false : true;
+			
+			
+			// make it so you can't toggle (to be reset upon onkeyup)
+			canTogglePause = false;
+			
+			// if it is now paused
+			if (Paused){
+				// pause pauseable timerouts and intervals
+				if (i_motherShip!=null) i_motherShip.pause();
+                if (t_FireAtPlayer!=null) t_FireAtPlayer.pause();
+				
+				// make pause menu
+				ctx.save();
+				ctx.fillStyle = "rgba(0,0,0,.3)";
+				ctx.fillRect(0,0,canvas.width, canvas.height);
+				
+				ctx.fillStyle = "rgba(150,150,150,.8)";
+				ctx.fillRect(canvas.width / 2 - 160, canvas.height / 2 - 80, 320, 160);
+				
+				ctx.fillStyle = "White";
+				ctx.font = "60pt Calibri"
+				ctx.fillText("Paused",canvas.width/2 - 120, canvas.height/2 + 20);
+				
+				ctx.restore();						
+			} else { // game restarted
+				// restart motherShips, but with appropriate time left
+				if (i_motherShip!=null) i_motherShip.resume();
+                if (t_FireAtPlayer!=null) t_FireAtPlayer.resume();
+				
+				// clear screen and redraw the player
+				ctx.clearRect(0,0,canvas.width, canvas.height);
+				player.drawMe();
+			}
+		}
+		
+		// handler for enemies firing back, necesarry because the timer will never null out other wise
+		function EnemyFiringHandler(enemyNumber){
+			// if the enemy still exists
+			if (Enemies[enemyNumber]){
+				Enemies[enemyNumber].fire();
+			}
+			// otherwise, if there are even still any enemies
+			else if (Enemies.length){
+				enemyNumber = Math.floor(Math.random() * Enemies.length);
+				Enemies[enemyNumber].fire();
+			}
+			// if there aren't any enemies I just won't reset it here
+		}
+		
+		
+		function SetHomeScreen(){
+			Playing = false;
+			resetAll();
+			canFire = false;
+			player.drawMe();
+			t = window.setInterval(tick, 1000/frameRate);
+			startLevel(LEVEL = 2);
+            
+            SCORE = 0;
+			LIVES = 5;
+            		
+            
+		}
+		/**** START THE GAME ****/
+		
+		setTimeout(SetHomeScreen, 100);
+		
+		/****  ****/
+		
+    </script>
+    
+    
+</html>
