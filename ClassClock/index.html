@@ -146,7 +146,7 @@ function windowHW() {
 }
 
 function updateMainClockSize() {
-    EventFactory.setSize(MainEvent, windowHW()-40);
+    EventFactory.setSize(MainEvent, 0.9*windowHW());
 }
 window.onresize = updateMainClockSize;
 
