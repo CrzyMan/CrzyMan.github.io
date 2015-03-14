@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!--
+This page is for making events and watching them
+-->
+<html>
+    <head>
+        <title>Segments</title>
+        <style>
+            td
+            {
+                border: solid;
+                padding: 10px 10px 10px 10px;
+                font-size: 30pt;
+            }
+            
+            div.time
+            {
+                font-size: 15pt;
+            }
+            
+            div.title
+            {
+                font-size: 20pt;
+            }
+            
+            div.eventUnit
+            {
+                border: solid;
+                font-size: 20pt;
+            }
+            
+            input[type="time"]
+            {
+                font-size: 20pt;
+            }
+            
+            input[type="text"]
+            {
+                font-size: 20pt;
+            }
+            
+            canvas
+            {
+                border: solid;
+                display: block;
+                margin: 0 auto;
+            }
+        </style>
+        
+        <script src="ProgressCircle.js" async></script>
+        <script src="EventFactory2.js" async></script>
+    </head>
+
+    <body>
+        <p>
+            <div align="center" id="title" class="title"></div>
+            <canvas id="canvas"></canvas></br>
+        </p>
+        
+        <div id="div_eventHolder">
+            <div id="ev1" class="eventUnit">
+                Name: <input type="text"/> Status: <span style="color: #009900">Enabled</span><br/>
+                Time: <input type="time"/> <button onclick="toggleEvent(this)">Disable</button>
+            </div>
+        </div>
+        
+        <script>
+
+document.body.onload = initialize;
+
+var timer;
+var canvas;
+var progress;
+
+function initialize(){
+    
+    canvas = document.getElementById("canvas");
+    canvas.c = canvas.getContext("2d");
+    canvas.height = 400;
+    canvas.width = 400;
+    
+    progress = new ProgressCircle();
+    progress.setMax(100);
+    progress.setValue(75);
+    progress.lineWidth = 40;
+    var hH = canvas.height/2;
+    var hW = canvas.width/2;
+    progress.radius = (hH) - (progress.lineWidth/2);
+    progress.setPos(hW, hH);
+    
+    updatePage();
+    timer = window.setInterval(updatePage, 1000);
+}
+
+function appendOrder(num){
+    var ones = num-(Math.round(num/10)*10);
+    return num + (ones==1?"st":ones==2?"nd":ones==3?"rd":"th");
+}
+
+function updatePage(){
+    var now = new Date();
+    fillTable(now);
+    updateProgress(canvas.c, now);
+}
+
+function updateProgress(ctx, now){
+    if (EventFactory.events.length > 0){
+        var tsl = EventFactory.timeSinceLast(now);
+        var ttn = EventFactory.timeTillNext(now)
+        progress.setMax(tsl + ttn);
+        progress.setValue(tsl);
+        clearCanvas();
+        progress.draw(ctx);
+        
+        var fontSize = 40;
+        ctx.font = fontSize+"px Courier";
+        // Courier is nice beacuse it is square, each side is 0.6 of the fontsize
+        var time = parseToString(EventFactory.toParts(EventFactory.timeTillNext(now)));
+        ctx.fillText(time, progress.x-fontSize*0.6*time.length*0.5, progress.y-fontSize*0.3);
+        
+        fontSize = 20;
+        ctx.font = fontSize+"px Courier";
+        var message = "Till " + EventFactory.getNextEvent(now)[0].name;
+        ctx.fillText(message, progress.x-fontSize*0.6*message.length*0.5, progress.y+fontSize*0.6);
+    }
+}
+
+function toggleEvent(elem){
+    elem.parentElement.children.filter(function(e){return e})
+}
+
+function clearCanvas(){
+    canvas.c.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+
+
+
+        </script>
+    </body>
+</html>

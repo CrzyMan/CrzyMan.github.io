@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-
+<!--
+This page is for watching times, using canvas
+-->
 <html>
     <head>
         <title>Class Clock</title>
@@ -28,6 +30,9 @@
                 margin: 0 auto;
             }
         </style>
+        
+        <script src="ProgressCircle.js" async></script>
+        <script src="EventFactory.js" async></script>
     </head>
 
     <body>
@@ -199,228 +204,8 @@ function clearCanvas(){
 }
 
 
-/*************************************************\
- * EventFactory                                  *
- *                                               *
- * Produces, contains, maintains, handles events *
-\*************************************************/
-var EventFactory = {
-    
-    /* 
-     * Seriously design the data structure for the events
-     * --- It needs quick look up ---
-     * --- insert and remove aren't often, so can be slow ---
-     * --- QUICK FIND NEXT ---
-     * --- QUICK FIND BEFORE ---
-     *
-     * - sorted array (by time for easy next and previous event)
-     * - - hashing function which is rewritten during sort
-     * - - something that pushes the result to one side or another
-     * - - object where each value is the index for the event `indecies[8][5] = 0; indecies[8][55] = 1`
-     * - - straight up binary search
-     * - - buckets
-     * - - - indecies for hours, then binary search between the hours
-    */
-    
-    events: [],
-    
-    addEvent: function(hour, minute, name, pm){
-        EventFactory.events.push(EventFactory.newEvent(hour, minute, name, pm));
-        EventFactory.events.sort(EventFactory.compare);
-    },
-    
-    newEvent: function(hour, minute, name, pm){
-        hour = hour || 0;
-        minute = minute || 0;
-        name = name || "";
-        pm = pm || false;
-        hour += pm?12:0;
-        
-        return {'hour': hour, 'minute': minute, 'name': name};
-    },
-    
-    find: function(hour, minute, name){
-        var event = EventFactory.newEvent(hour, minute, name);
-        var response = EventFactory.findHelp(0, EventFactory.events.length-1, event);
-        if (response[0]==true  && EventFactory.events[response[1]].name != name){
-            return [false, response[1]];
-        }
-        return response;
-    },
-    
-    findHelp: function(start, end, event){
-        if (start > end ) return [false,start];
-        var mid = Math.floor((start + end) / 2);
-        
-        var comp = EventFactory.compare(event, EventFactory.events[mid]);
-        
-        // if it is the event
-        if (comp == 0){
-            return [true, mid];
-        }
-        if (comp > 0){
-            return EventFactory.findHelp(mid + 1, end, event);
-        }
-        return EventFactory.findHelp(start, mid - 1, event);
-    },
-    
-    removeEvent: function(hour, minute, name, pm){
-        if (hour instanceof undefined) return;
-        if (minute instanceof undefined) return;
-        if (name instanceof undefined) return;
-        
-        pm = pm || false;
-        hour += pm?12:0;
-        
-        if (!EventFactory.events[hour][minute]){
-            EventFactory.events[hour][minute] = null;
-            size--;
-        }
-    },
-    
-    next: null,
-    
-    getNextEvent: function(now){
-        if (EventFactory.size <= 0) return [null, -1];
-        
-        var h = now.getHours();
-        var m = now.getMinutes() + 1;
-        
-        var result = EventFactory.find(h, m);
-        
-        var i = result[1]%EventFactory.events.length;
-        return [EventFactory.events[i], i];
-        
-    },
-    
-    timeTillNext: function(now){
-        return EventFactory.timeTill(now, EventFactory.getNextEvent(now)[0]);
-    },
-    
-    timeTill: function(now, event){
-        if (now == null) return -1;
-        
-        var diff = EventFactory.compare(event, now);
-        diff += diff < 0 ? 24*3600 : 0;
-        return diff;
-    },
-    
-    timeSinceLast: function(now){
-        if (EventFactory.events.length <= 0) return -1;
-        var i = (EventFactory.getNextEvent(now)[1] - 1 + EventFactory.events.length)%EventFactory.events.length;
-        
-        var diff = EventFactory.compare(now, EventFactory.events[i]);
-        diff += diff < 0 ? 24*3600 : 0;
-        return diff;
-    },
-    
-    toSeconds: function(event){
-        // passed an event
-        if (typeof(event.hour) == "number")
-            return event.hour*3600+event.minute*60;
-        
-        // passed a date
-        if (typeof(event.hour) == "undefined")
-            return event.getHours()*3600 + event.getMinutes()*60 + event.getSeconds();
-        
-        return -1;
-        
-    },
-    
-    toParts: function(seconds){
-        var h = Math.floor(seconds / 3600);
-        seconds -= h*3600;
-        var m = Math.floor(seconds/60);
-        seconds -= m*60;
-        h += h < 0 ? 24 : 0;
-        return [h, m, seconds];
-    },
-    
-    compare: function(e1, e2){
-        return EventFactory.toSeconds(e1) - EventFactory.toSeconds(e2);
-    }
-}
 
 
-
-/***************************************************\
- * ProgressCircle Class                            *
- *                                                 *
- * Shows progress by drawing a portion of a circle *
-\***************************************************/
-
-function ProgressCircle(){
-    
-    this.x = 0;
-    this.y = 0;
-    this.setPos = function(_x, _y){
-        this.x = _x;
-        this.y = _y;
-    };
-    
-    var value = 0;
-    this.setValue = function(v){
-        value = v>=min?(v<=max?v:value):value;
-    };
-    this.getValue = function(){
-        return value;
-    };
-    
-    this.radius = 0;
-    
-    
-    var max = 1;
-    this.setMax = function(m){
-        max = m>min?m:max;
-    };
-    this.getMax = function(){
-        return max;
-    };
-    
-    var min = 0;
-    this.setMin = function(m){
-        min = m<max?m:min;
-    };
-    this.getMin = function(){
-        return min;
-    };
-    
-    this.getProgress = function(){
-        return (value - min) / (max - min);
-    }
-    
-    this.upColor = "black";
-    
-    this.downColor = "red";
-    
-    this.lineJoin = "round";
-    
-    this.lineWidth = 1;
-    
-    this.draw = function(ctx){
-        ctx.lineWidth = this.lineWidth;
-        ctx.lineJoin = this.lineJoin;
-        
-        
-        ctx.strokeStyle = this.downColor;
-        
-        ctx.beginPath();
-        var a = 2*Math.PI*this.getProgress();
-        ctx.arc(this.x, this.y, this.radius - 0.2, 0, 2*Math.PI);
-        ctx.stroke();
-        ctx.closePath();
-        
-        ctx.strokeStyle = this.upColor;
-        
-        ctx.beginPath();
-        var a = 2*Math.PI*this.getProgress();
-        ctx.arc(this.x, this.y,this.radius,-Math.PI/2,a-Math.PI/2 + 0.01);
-        ctx.stroke();
-        ctx.closePath();
-        
-    };
-}
         </script>
     </body>
 </html>
-	
