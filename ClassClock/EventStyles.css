@@ -4,17 +4,17 @@
           
           background-color: grey;
           border-radius: 50%;
-     }
-     .mask, .fill {
+}
+.mask, .fill {
           width:    150px;
           height:   150px;
           position: absolute;
           border-radius: 50%;
           -webkit-backface-visibility: hidden;
           border-radius: 50%;
-     }
-     
-     .maskR{
+}
+
+.maskR{
           width:    150px;
           height:   150px;
           position: absolute;
@@ -23,46 +23,62 @@
           border-radius: 50%;
           position: absolute;
           clip: rect(0px, 150px, 150px, 75px);
-     }
-     
-     .maskL {
+          transform: rotate(0deg);
+}
+
+.maskL {
           width:    150px;
           height:   150px;
           position: absolute;
-          border-radius: 50%;
           -webkit-backface-visibility: hidden;
           border-radius: 50%;
           position: absolute;
           clip: rect(0px, 75px, 150px, 0px);
-     }
-     
-     .fill {
+          transform: rotate(0deg);
+}
+
+.fill {
           position: absolute;
           background-color: red;
           clip: rect(0px, 75px, 150px, 0px);
-     }
-     
-     .inset {
+}
+
+.inset {
           width:       120px;
           height:      120px;
           position:    absolute;
           margin-left: 15px;
           margin-top:  15px;
-
+          
           background-color: white;
           border-radius: 50%;
-     }
-     
-     .timecentage {
+}
+
+.timecentage {
           height: 120px;
           width: 120px;
+          text-align: center;
+}
+td
+{
+          bborder: solid;
+          padding: 10px 10px 10px 10px;
+          font-size: 30pt;
+}
+
+div.time
+{
+          font-size: 15pt;
+}
+
+div.title
+{
           font-size: 20pt;
-          text-align: center;
-     }
-     
-     span {
-          display: inline-block;
-          vertical-align: middle;
-          text-align: center;
-          line-height: 120px;
-     }
+}
+
+canvas
+{
+          bborder: solid;
+          display: block;
+          margin: 0 auto;
+}
