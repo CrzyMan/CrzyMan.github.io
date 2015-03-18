@@ -35,6 +35,7 @@ if (window.mobilecheck()) {
             <div align="center" id="title" class="title"></div>
             <div align="center" id="Main"></div>
         </p>
+        <!-- --
         <center style="width:100%">
             <table>
                 <tbody>
@@ -81,6 +82,35 @@ if (window.mobilecheck()) {
                 </tbody>
             </table>
         </center>
+        <!-- -->
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td><div id="0s" class="s" value=0></div></td>
+                    <td><div id="1s" class="s" value=1></div></td>
+                    <td><div id="2s" class="s" value=2></div></td>
+                    <td><div id="3s" class="s" value=3></div></td>
+                    <td><div id="4s" class="s" value=4></div></td>
+                    <td><div id="5s" class="s" value=5></div></td>
+                    <td><div id="6s" class="s" value=6></div></td>
+                    <td><div id="7s" class="s" value=7></div></td>
+                    <td><div id="8s" class="s" value=8></div></td>
+                    <td><div id="9s" class="s" value=9></div></td>
+                </tr>
+                <tr>
+                    <td><div id="0e" class="e" value=0></div></td>
+                    <td><div id="1e" class="e" value=1></div></td>
+                    <td><div id="2e" class="e" value=2></div></td>
+                    <td><div id="3e" class="e" value=3></div></td>
+                    <td><div id="4e" class="e" value=4></div></td>
+                    <td><div id="5e" class="e" value=5></div></td>
+                    <td><div id="6e" class="e" value=6></div></td>
+                    <td><div id="7e" class="e" value=7></div></td>
+                    <td><div id="8e" class="e" value=8></div></td>
+                    <td><div id="9e" class="e" value=9></div></td>
+                </tr>
+            </tbody>
+        </table>
         <script>
 
 document.body.onload = initialize;
@@ -146,9 +176,9 @@ function windowHW() {
 }
 
 function updateClockSizes() {
-    EventFactory.events.forEach(function(e){EventFactory.setSize(e, windowHW()*0.4)});
+    EventFactory.events.forEach(function(e){EventFactory.setSize(e, window.innerWidth/13)});
     
-    EventFactory.setSize(MainEvent, 0.95*windowHW());
+    EventFactory.setSize(MainEvent, 0.6*windowHW());
 }
 window.onresize = updateClockSizes;
 
