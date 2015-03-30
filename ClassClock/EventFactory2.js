@@ -360,7 +360,7 @@ var EventFactory = {
     setElementText: function(ev, time, name){
         ev.element.children[1].children[0].children[0].innerText = time;
         if (typeof name != "undefined") {
-            ev.element.children[1].children[0].children[1].innerText = name;
+            ev.element.children[1].children[0].children[1].innerText = "Till " + name;
         }
     },
     
