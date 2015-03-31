@@ -22,7 +22,9 @@ var timer;
 var MainEvent;
 
 function initialize(){
-    
+    if (isMobile)
+        document.getElementsByTagName("a")[0].style.fontSize = "15pt";
+
     // make all of the class events, perhaps produce a data structure to load these from
     EventFactory.addEvent(8,5,"Start of First", false, document.getElementById("0s"));
     EventFactory.addEvent(8,55,"End of First", false, document.getElementById("0e"));
@@ -61,7 +63,7 @@ function windowHW() {
 }
 
 function updateClockSizes() {
-    EventFactory.events.forEach(function(e){EventFactory.setSize(e, window.innerWidth/13)});
+    EventFactory.events.forEach(function(e){EventFactory.setSize(e, window.innerWidth/(isMobile?2.5:13))});
     
     EventFactory.setSize(MainEvent, (isMobile?0.95:.6)*windowHW());
 }
@@ -79,7 +81,7 @@ function updatePage(){
 }
 
 function parseToString(time){
-    return ""+addZero(time[0])+":"+addZero(time[1])+":"+addZero(time[2]);
+    returnZero(time[0])+":"+addZero(time[1])+":"+addZero(time[2]);
 }
 
 function addZero(num){
