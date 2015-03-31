@@ -23,7 +23,7 @@ var MainEvent;
 
 function initialize(){
     if (isMobile)
-        document.getElementsByTagName("a")[0].style.fontSize = "15pt";
+        document.getElementsByTagName("a")[0].style.fontSize = "5pt";
 
     // make all of the class events, perhaps produce a data structure to load these from
     EventFactory.addEvent(8,5,"Start of First", false, document.getElementById("0s"));
@@ -81,7 +81,7 @@ function updatePage(){
 }
 
 function parseToString(time){
-    returnZero(time[0])+":"+addZero(time[1])+":"+addZero(time[2]);
+    return ""+addZero(time[0])+":"+addZero(time[1])+":"+addZero(time[2]);
 }
 
 function addZero(num){
