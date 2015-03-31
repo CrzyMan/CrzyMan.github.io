@@ -39,7 +39,11 @@
 
 .fill {
           position: absolute;
-          background-color: red;
+          /* Blue fill*
+          background-color: #00CCFF;
+          /* Red fill */
+          background-color: #FF0000;
+          /* */
           clip: rect(0px, 75px, 150px, 0px);
 }
 
@@ -50,7 +54,7 @@
           margin-left: 15px;
           margin-top:  15px;
           
-          background-color: white;
+          background-color: #DDDDDD;
           border-radius: 50%;
 }
 
@@ -82,8 +86,20 @@ canvas
 }
 a.mail
 {
+          /* dark theme */
+          color: white;
+          /* */
+          
           padding: 5px;
           position: absolute;
           left: 0;
           top: 0;
+}
+body
+{
+          /* light theme *
+          background-color: white;
+          /* Dark theme */
+          background-color: #333333;
+          /* *.
 }
