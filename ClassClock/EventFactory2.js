@@ -132,8 +132,14 @@ var EventFactory = {
     
     // returns the number of seconds since the previous event relative to a given time
     timeSincePrevious: function(now){
+        var  since = EventFactory.compare(now, EventFactory.getPreviousEvent(now));
         
-        return EventFactory.compare(now, EventFactory.getPreviousEvent(now));
+        // previous event was today
+        if (since >= 0)
+            return since;
+        
+        // previous event was yesterday and we need to account for that
+        return since + 86400;
     },
     
     // returns the number of seconds till the next occurance of the event that happend most recently relative to a given time
@@ -147,14 +153,13 @@ var EventFactory = {
         if (typeof ev.hour == "number")
             return ev.hour*3600+ev.minute*60;
         
+        // if passed an array
+        if (typeof ev[0] != "undefined")
+            return ev[0]*3600+ev[1]*60+ev[2];
+        
         // passed a date
         if (typeof ev.hour == "undefined")
             return ev.getHours()*3600 + ev.getMinutes()*60 + ev.getSeconds();
-        
-        // if passed an array
-        if (typeof ev[0] != "undefined") {
-            return ev[0]*3600+ev[1]*60+ev[2];
-        }
         return -1;
         
     },

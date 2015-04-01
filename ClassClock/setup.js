@@ -25,7 +25,7 @@ function initialize(){
     if (isMobile)
         document.getElementsByTagName("a")[0].style.fontSize = "7pt";
 
-    // make all of the class events, perhaps produce a data structure to load these from
+    // add all of the class events to the EventFactory, perhaps produce a data structure to load these from
     EventFactory.addEvent(8,5,"Start of First", false, document.getElementById("0s"));
     EventFactory.addEvent(8,55,"End of First", false, document.getElementById("0e"));
     EventFactory.addEvent(9,0,"Start of Second", false, document.getElementById("1s"));
@@ -47,47 +47,42 @@ function initialize(){
     EventFactory.addEvent(4,20,"Start of Tenth", true, document.getElementById("9s"));
     EventFactory.addEvent(5,10,"End of Tenth", true, document.getElementById("9e"));
     
-    // make the main clock and size it
+    // make the main clock
     MainEvent = EventFactory.newEvent(0,0,"Main",false,document.getElementById('Main'));
     
     // properly size all of the events
     updateClockSizes();
     
-    // update the rest of the page and set the timer
-    updatePage();
-    timer = window.setInterval(updatePage, 1000);
+    // start the timer, it runs mainTick on the call and then once a second
+    start();
 }
 
+// updates the page with the current date
+function mainTick(){
+    updatePage(new Date());
+}
+
+// returns the lowest of the Height and width of the page
 function windowHW() {
     return window.innerHeight>window.innerWidth?window.innerWidth:window.innerHeight-20;
 }
 
+// updates all of the clock sizes
 function updateClockSizes() {
     EventFactory.events.forEach(function(e){EventFactory.setSize(e, window.innerWidth/(isMobile?2.5:13))});
     
     EventFactory.setSize(MainEvent, (isMobile?0.95:.6)*windowHW());
 }
+// make sure that everything resizes when the window does
 window.onresize = updateClockSizes;
 
-function appendOrder(num){
-    var ones = num-(Math.round(num/10)*10);
-    return num + (ones==1?"st":ones==2?"nd":ones==3?"rd":"th");
-}
-
-function updatePage(){
-    var now = new Date();
+// updates all of the events and then the main event
+function updatePage(now){
     EventFactory.updateAllEvents(now);
     updateMainEvent(now);
 }
 
-function parseToString(time){
-    return ""+addZero(time[0])+":"+addZero(time[1])+":"+addZero(time[2]);
-}
-
-function addZero(num){
-    return num<10?"0"+num:num;
-}
-
+// update just the main event
 function updateMainEvent(now){
     var till = EventFactory.timeTillNext(now);
     var since = EventFactory.timeSincePrevious(now);
@@ -96,4 +91,15 @@ function updateMainEvent(now){
     
     var next = EventFactory.getNextEvent(now);
     EventFactory.setElementText(MainEvent, EventFactory.toString(till), next.name);
+}
+
+// stop the timer
+function stop(){
+    window.clearInterval(timer);
+}
+
+// start the timer
+function start(){
+    mainTick();
+    timer = window.setInterval(mainTick, 1000);
 }
