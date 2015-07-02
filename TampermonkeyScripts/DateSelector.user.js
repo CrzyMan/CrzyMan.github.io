@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Date Selector
 // @namespace    http://www.google.com
-// @version      1
+// @version      1.0
 // @description  It selects today's date on Rose-Hulman's employee hour log
 // @author       Tyler Whitehouse
 // @match        https://prod11gbss8.rose-hulman.edu/BanSS/bwpkteis.P_SelectTimeSheetDriver
