@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>JOHN CENA</title>
+    <style>
+        body{
+            background-image: url(JOHN_CENA.png);
+        }
+        
+        div{
+            position: absolute;
+            font-size: 100pt;
+            color: white;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        td{
+            position: relative;
+        }
+        
+        tr{
+            height: 50%;
+        }
+        
+        table{
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            rightL 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <table>
+        <tbody>
+            <tr >
+                <td onclick="playSound()">
+                    <div id="top">Click To Play</div>
+                </td>
+            </tr>
+            <tr >
+                <td onclick="pauseSound()">
+                    <div id="bottom">Click To Pause</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div>
+        
+    </div>
+
+<script>
+var el = document.createElement('div');
+var soundfile = 'AND HIS NAME IS JOHN CENA.mp3';
+var audio = new Audio(soundfile);
+el.mp3 = audio;
+
+function playSound() {
+    if (status && el.mp3) {
+        if(el.mp3.paused) el.mp3.play();
+        else el.mp3.currentTime = 0;
+    } else {
+        el.mp3 = new Audio(soundfile);
+        el.mp3.play();
+    }
+}
+
+
+function pauseSound() {
+    if (el.mp3) {
+        el.mp3.pause();
+    } else {
+        el.mp3 = new Audio(soundfile);
+        el.mp3.pause();
+    }
+    
+}
+
+</script>
+
+</body>
+</html>
