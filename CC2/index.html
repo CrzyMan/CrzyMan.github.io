@@ -58,13 +58,15 @@ grad.canvas.height = 1;
 
 
 
-var rw, hrw, lw, size, hsize, ringBuff;
+var rw, hrw, lw, size, hsize, winSize, ringBuff;
 function updateCanvasSize() {
     var w = window.innerWidth*0.99;
     
     var h = window.innerHeight*0.97;
     
-    size = h<w?h:w;
+    winSize = h<w?h:w;
+    
+    size = 1000;
     hsize = size/2;
     
     rw = size*0.05;
@@ -75,6 +77,9 @@ function updateCanvasSize() {
     
     ctx.canvas.height = size;
     ctx.canvas.width = size;
+    
+    ctx.canvas.style.width = winSize+"px";
+    ctx.canvas.style.height = winSize+"px";
 }
 updateCanvasSize();
 window.addEventListener('resize', updateCanvasSize);
