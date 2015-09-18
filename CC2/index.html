@@ -262,8 +262,8 @@ function drawRings(){
 function drawRad(ev){
     const angle = ev[0];
     const a = angle - Math.PI*0.5
-    const ir = hsize-rw-1;
-    const or = hsize -1;
+    const ir = hsize-rw-1.5;
+    const or = hsize -0.5;
     const x = Math.cos(a);
     const y = Math.sin(a);
     ctx.lineWidth = lw;
