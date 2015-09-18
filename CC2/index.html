@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Page Title</title>
+    <style>
+
+canvas{
+    'border: solid;
+}
+
+.cnvs{
+    position: absolute;
+    transform: translate(-50%,-50%);
+    left: 50%;
+    top: 50%;
+}
+
+.spn{
+    
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-Size: 8vmin;
+    text-align: center;
+    transform: translate(-50%,-50%);
+}
+
+div{
+    overflow-x: hidden;
+    position: relative;
+    width: 99%;
+}
+    </style>
+</head>
+
+<body>
+    <canvas class='cnvs' id='canvas'></canvas>
+    <div class='spn'>
+        <center>
+        <span id="s_time">5:13</span><br/>
+        Till <span id="s_name">stuff</span>
+        </center>
+    </div>
+
+<script>
+
+console.log("running");
+
+// initialize canvases
+var ctx = document.getElementById('canvas').getContext('2d');
+var grad = document.createElement('canvas').getContext('2d');
+
+// size gradiant
+grad.canvas.width = 300;
+grad.canvas.height = 1;
+
+
+
+var rw, hrw, lw, size, hsize, ringBuff;
+function updateCanvasSize() {
+    var w = window.innerWidth*0.99;
+    
+    var h = window.innerHeight*0.97;
+    
+    size = h<w?h:w;
+    hsize = size/2;
+    
+    rw = size*0.05;
+    hrw = rw/2;
+    lw = size*0.005;
+    
+    ringBuff = size*0.01;
+    
+    ctx.canvas.height = size;
+    ctx.canvas.width = size;
+}
+updateCanvasSize();
+window.addEventListener('resize', updateCanvasSize);
+
+// ring colors
+var outerRingColor = "#00AAFF";
+var grd = grad.createLinearGradient(0, 0, grad.canvas.width, 0);
+grd.addColorStop(0.6, outerRingColor);
+grd.addColorStop(0.8, "orange");
+grd.addColorStop(1, "red");
+grad.fillStyle = grd;
+grad.fillRect(0, 0, grad.canvas.width, grad.canvas.height);
+
+
+
+
+/** Gets color at a progress (0 to 1) along a gradient
+* 
+* Params
+* 	prog, float progress along the gradient
+* 
+* Return
+* 	string of the rgba color
+*/
+function getGradColor(prog){
+    var dat = grad.getImageData(~~(prog*grad.canvas.width),0,1,1).data;
+    return "rgba("+dat[0]+","+dat[1]+","+dat[2]+","+dat[3]+")";
+}
+
+
+
+
+// current time
+var time = 0;
+
+// constant to convert between seconds and angle
+const timeConst = Math.PI/43200; // == (Math.PI*2)/(24*60*60)
+
+/** Converts a date into an angle corresponding to daily progress
+*
+* Params
+* 	d, Date to be converted
+* 
+* Return
+* 	float angle in radians
+*/
+function getTimeAngle(d){
+    d = d || new Date();
+    return (d.getHours()*3600+d.getMinutes()*60+d.getSeconds()+d.getMilliseconds()/1000)*timeConst;
+}
+
+
+
+
+// times for work
+const workTimes =[
+	[8, 0],
+	[12, 0],
+	[13, 0],
+    [17, 0]
+];
+
+// times for the start and end of each class
+const schoolEvents = [
+    [[08, 05], "Start of First"],
+    [[08, 55], "End of First"],
+    [[09, 00], "Start of Second"],
+    [[09, 50], "End of Second"],
+    [[09, 55], "Start of Third"],
+    [[10, 45], "End of Third"],
+    [[10, 50], "Start of Fourth"],
+    [[11, 40], "End of Fourth"],
+    [[11, 45], "Start of Fifth"],
+    [[12, 35], "End of Fifth"],
+    [[12, 40], "Start of Sixth"],
+    [[13, 30], "End of Sixth"],
+    [[13, 35], "Start of Seventh"],
+    [[14, 25], "End of Seventh"],
+    [[14, 30], "Start of Eigth"],
+    [[15, 20], "End of Eigth"],
+    [[15, 25], "Start of Ninth"],
+    [[16, 15], "End of Ninth"],
+    [[16, 20], "Start of Tenth"],
+    [[17, 10], "End of Tenth"],
+];
+
+// produce a more useful array of events from the other events
+const rads = schoolEvents.map(timeToAngle);
+
+// sort rads by angle, which is inferred chronologically
+rads.sort(sortByAngle);
+
+
+
+/** Convert an event ([[hour, minute], name]) to [angle, name]
+* 
+* Params
+* 	ev, event
+*/
+function timeToAngle(ev){
+    const ang = (ev[0][0]*3600+ev[0][1]*60)*timeConst;
+    return [ang, ev[1]];
+}
+
+
+
+
+/** Sorting function to order events by angle, which is infered time
+* 
+* Params
+* 	a, first event
+* 	b, second event
+* 
+* Return
+* 	float related to whether event a is before event b
+*		<0 : a < b
+*		=0 : a == b
+*		>0 : a > b
+*/
+function sortByAngle(a, b){
+    return a[0]-b[0];
+}
+
+
+/** Draw the 2 background rings, and the progress rings
+*/
+function drawRings(){
+    var after = 0;
+    while (after < rads.length && rads[after][0] < time){after++;}
+    var before = (after+rads.length-1) % rads.length;
+    var after = (before+rads.length+1) % rads.length;
+    var since = (time - rads[before][0] + Math.PI*2) % (Math.PI*2);
+    var till = (rads[after][0] - time + Math.PI*2)%(Math.PI*2);
+    
+    updateTimeTill(till);
+    updateEventName(rads[after]);
+    
+    var total = since+till;
+    var prog = (since/total);
+    
+    prog *= Math.PI*2;
+
+    ctx.clearRect(0,0,size,size);
+
+    ctx.lineWidth=rw;
+
+    // grey rings
+    // background rings
+    ctx.beginPath();
+    ctx.strokeStyle = "#CCCCCC";
+    ctx.arc(hsize,hsize,hsize-hrw-1,0,2*Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(hsize,hsize,hsize-hrw-rw-ringBuff,0,2*Math.PI);
+    ctx.stroke();
+
+    // progress rings rings
+    // daily progress
+    ctx.beginPath();
+    ctx.strokeStyle = "#00AAFF";
+    ctx.arc(hsize,hsize,hsize-hrw-1,-Math.PI*0.5,time-Math.PI*0.5);
+    ctx.stroke();
+
+    // event progress
+    ctx.beginPath();
+    ctx.strokeStyle = getGradColor(0.5*prog/Math.PI);
+    ctx.arc(hsize,hsize,hsize-hrw-rw-ringBuff,-Math.PI*0.5,prog-Math.PI*0.5);
+    ctx.stroke();
+}
+
+
+
+
+/** Draw a line for the angle of an event
+* 
+* Params
+* 	ev, event in rads ([angle, name])
+*/
+function drawRad(ev){
+    const angle = ev[0];
+    const a = angle - Math.PI*0.5
+    const ir = hsize-rw-1;
+    const or = hsize -1;
+    const x = Math.cos(a);
+    const y = Math.sin(a);
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.moveTo(hsize+ir*x, hsize+ir*y);
+    ctx.lineTo(hsize+or*x, hsize+or*y);
+    ctx.strokeStyle = angle>time?"#000000":"#FFFFFF";
+    ctx.stroke();
+}
+
+
+
+
+// DOM element to display the time till the next event
+const s_time = document.getElementById("s_time");
+
+/** Takes a measure of how long until an event, and displays it in hours, minutes, and seconds
+* 
+* Params
+* 	till, angle in rads
+*/
+function updateTimeTill(till){
+    s_time.innerText = toTimeString(till/timeConst);
+}
+
+
+
+
+/** Takes seconds and converts to a string of hours, minutes, and seconds
+* 
+* Params
+* 	t, time in seconds
+*/
+function toTimeString(t){
+    var h = ~~(t/3600);
+    t -= h*3600;
+    var m = ~~(t/60);
+    t -= m*60;
+    return addZs(h)+":"+addZs(m)+":"+addZs(~~t);
+}
+
+
+
+
+/** Take a time and add a '0' prefix if necessary
+* 
+* Params
+* 	t, time to add a '0' to or not
+* 
+* Return
+* 	2 character string of the time 
+*/
+function addZs(t){
+    return (t<10?"0":"")+t;
+}
+
+
+
+
+// DOM element to display the name of the event
+const s_name = document.getElementById('s_name');
+
+/** Update the text in the name element to the name of an event
+* 
+* Params
+* 	ev, event in rads ([angle, name])
+*/
+function updateEventName(ev){
+    s_name.innerText = ev[1];
+}
+
+
+
+
+// The id of the requested animation frame
+var animFrame = 0;
+
+/** Function to coordinate the update of the screen
+*/
+function tick(){
+    time = getTimeAngle();
+    drawRings(ctx, time);
+    rads.forEach(drawRad);
+    
+    animFrame = window.requestAnimationFrame(tick);
+}
+
+// initiate updating the screen
+tick()
+
+</script>
+
+</body>
+</html>
