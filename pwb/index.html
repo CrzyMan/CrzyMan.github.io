@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>People Watching Bingo</title>
+    <style>
+        td{
+            width: 20%;
+            height: 18%;
+            border: solid;
+            text-align: center;
+            
+            //font-size: 0.5vw;
+            //font-size: 32px;
+        }
+        td.topRow{
+            border: hidden;
+            height: 20px;
+            font-size: 40pt;
+        }
+        table{
+            position: absolute;
+            width: 98%;
+            height: 95%;
+        }
+    </style>
+</head>
+
+<body>
+
+<table>
+    <tbody>
+        <tr>
+            <td class="topRow" id="cb">B</td>
+            <td class="topRow" id="ci">I</td>
+            <td class="topRow" id="cn">N</td>
+            <td class="topRow" id="cg">G</td>
+            <td class="topRow" id="co">O</td>
+        </tr>
+        <tr>
+            <td id="c1"></td>
+            <td id="c2"></td>
+            <td id="c3"></td>
+            <td id="c4"></td>
+            <td id="c5"></td>
+        </tr>
+        <tr>
+            <td id="c6"></td>
+            <td id="c7"></td>
+            <td id="c8"></td>
+            <td id="c9"></td>
+            <td id="c10"></td>
+        </tr>
+       <tr>
+            <td id="c11"></td>
+            <td id="c12"></td>
+            <td id="c13">Free</td>
+            <td id="c14"></td>
+            <td id="c15"></td>
+        </tr>
+        <tr>
+            <td id="c16"></td>
+            <td id="c17"></td>
+            <td id="c18"></td>
+            <td id="c19"></td>
+            <td id="c20"></td>
+        </tr>
+        <tr>
+            <td id="c21"></td>
+            <td id="c22"></td>
+            <td id="c23"></td>
+            <td id="c24"></td>
+            <td id="c25"></td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+
+var options = [
+    "Roller Blades",
+"Interview Attire",
+"Fox Ears (or other fox attire)",
+"Too-short Booty shorts",
+"Hugging Books",
+"Crutches",
+"Fedora",
+"Tour",
+"Small Child (~elementary school)",
+"Group Of Alumni",
+"Lone Alumnus",
+"Frantic Homework Turning-In",
+"Subway",
+"Noble Roman' s",
+"Jump!",
+"Frattire (2+ pieces of clothing)",
+"Mailroom Package",
+"Unknown Gender",
+"Large Headphones",
+"Mullet/Hockey Hair",
+"Mohawk",
+"Barefoot",
+"Plaid Jacket",
+"#1 Shirt AND Hat",
+"Alcohol Suspicion",
+"Bonfire Shirt (any year)",
+"Sunglasses around neck",
+"Nerd Sprinter",
+"Dad Hat",
+"Weird Facial Hair",
+"Neckbeard (yes, these are 2 different things)",
+"Colored Pants",
+"Over-Enthusiastic High-5"
+
+    
+];
+
+function populateTable(list){
+    if (!list){
+        console.error("No list provided");
+        return;
+    }
+    var daList = shuffle(list);
+    
+    for (var i = 1; i <= 25; i++){
+        if (i != 13) {
+            document.getElementById('c'+i).innerText = daList[i];
+        }
+    }
+}
+
+// found at http://jsperf.com/array-shuffle-comparator/5
+var shuffle = function (arr) {
+    for (var i, tmp, n = arr.length; n; i = Math.floor(Math.random() * n), tmp = arr[--n], arr[n] = arr[i], arr[i] = tmp);
+    return arr;
+}
+
+document.getElementById('cb').addEventListener('click', populateTable.bind(null, options));
+
+populateTable(options);
+
+</script>
+
+</body>
+</html>
