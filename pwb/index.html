@@ -9,9 +9,6 @@
             height: 18%;
             border: solid;
             text-align: center;
-            
-            //font-size: 0.5vw;
-            //font-size: 32px;
         }
         td.topRow{
             border: hidden;
@@ -23,10 +20,32 @@
             width: 98%;
             height: 95%;
         }
+        
+        @keyframes gunnaWin{
+            00%  { transform: scale(1) translate(-50%, -50%); }
+            50% {   transform: scale(1.4) translate(-40%, -40%); }
+            00%  { transform: scale(1) translate(-50%, -50%); }
+        }
+        
+        .winning{
+            display: none; 
+            position: absolute;
+            text-align: center;
+            font-size: 8vw;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            //animation-name: gunnaWin;
+            //animation-duration: 0.5s;
+            //animation-iteration-count: infinite;
+        }
     </style>
 </head>
 
 <body>
+
+<div class="winning" id="winDiv">YOU<br/>WIN!</div>
 
 <table>
     <tbody>
@@ -38,47 +57,54 @@
             <td class="topRow" id="co">O</td>
         </tr>
         <tr>
+            <td id="c0"></td>
             <td id="c1"></td>
             <td id="c2"></td>
             <td id="c3"></td>
             <td id="c4"></td>
-            <td id="c5"></td>
         </tr>
         <tr>
+            <td id="c5"></td>
             <td id="c6"></td>
             <td id="c7"></td>
             <td id="c8"></td>
             <td id="c9"></td>
-            <td id="c10"></td>
-        </tr>
-       <tr>
-            <td id="c11"></td>
-            <td id="c12"></td>
-            <td id="c13">Free</td>
-            <td id="c14"></td>
-            <td id="c15"></td>
         </tr>
         <tr>
+            <td id="c10"></td>
+            <td id="c11"></td>
+            <td id="c12">Free</td>
+            <td id="c13"></td>
+            <td id="c14"></td>
+        </tr>
+        <tr>
+            <td id="c15"></td>
             <td id="c16"></td>
             <td id="c17"></td>
             <td id="c18"></td>
             <td id="c19"></td>
-            <td id="c20"></td>
         </tr>
         <tr>
+            <td id="c20"></td>
             <td id="c21"></td>
             <td id="c22"></td>
             <td id="c23"></td>
             <td id="c24"></td>
-            <td id="c25"></td>
         </tr>
     </tbody>
 </table>
 
 <script>
 
-var options = [
-    "Roller Blades",
+// assign clone function
+Array.prototype.clone = function(){return this.slice(0);};
+
+
+
+
+// Set the default options
+var defaultOptions = [
+"Roller Blades",
 "Interview Attire",
 "Fox Ears (or other fox attire)",
 "Too-short Booty shorts",
@@ -114,30 +140,124 @@ var options = [
 
     
 ];
+// selectedOptions is used by functions
+var selectedOptions = defaultOptions.clone();
 
-function populateTable(list){
+
+
+
+/** Populate the Bingo board
+ *
+ * Params
+ *   list, Array of what to populate with
+ */
+function populateBoard(list){
     if (!list){
         console.error("No list provided");
         return;
     }
+    if (list.length < 25) {
+        console.error("provided list is too short:\n"+list)
+    }
+    
     var daList = shuffle(list);
     
-    for (var i = 1; i <= 25; i++){
-        if (i != 13) {
-            document.getElementById('c'+i).innerText = daList[i];
+    var el;
+    for (var i = 0; i <= 24; i++){
+        if (i != 12) {
+            el = document.getElementById('c'+i)
+            el.innerText = daList[i];
+            el.style.background = "";
+            values[i] = 0;
         }
     }
 }
 
-// found at http://jsperf.com/array-shuffle-comparator/5
+
+
+
+// Found at http://jsperf.com/array-shuffle-comparator/5
 var shuffle = function (arr) {
     for (var i, tmp, n = arr.length; n; i = Math.floor(Math.random() * n), tmp = arr[--n], arr[n] = arr[i], arr[i] = tmp);
     return arr;
 }
 
-document.getElementById('cb').addEventListener('click', populateTable.bind(null, options));
 
-populateTable(options);
+
+
+// Click B refreshes the table with selected list
+document.getElementById('cb').addEventListener('click', populateBoard.bind(null, selectedOptions));
+
+
+
+var values = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+var highlight = "#AAAAAA";
+document.getElementById('c12').style.background = highlight;
+values[12] = 1;
+// add toggle function to each
+(function(){
+   for (var i = 0; i <= 24; i++){
+    var el = document.getElementById('c'+i);
+        if (i != 12) {
+            el.addEventListener('click', toggleCellHighlight);
+            
+        }
+        el.x = i % 5;
+        el.y = ~~(i / 5);
+        el.ind = i;
+        values[i];
+    } 
+})()
+
+/** Cell toggles whether it is highlighted or not
+ */
+function toggleCellHighlight() {
+    if (values[this.ind]==0) {
+        values[this.ind] = 1;
+        this.style.background = highlight;
+        
+        if(didjawin(this.x, this.y)){
+            alert("yuov win");
+        }
+        
+    } else {
+        values[this.ind] = 0;
+        this.style.background = "";
+    }
+}
+
+
+function didjawin(x, y){
+    var stats = [0, 0, 0, 0];
+    
+    for (var i = 0; i <= 4; i++) {
+        // vertical
+        ind = 5*i+x;
+        stats[0] += values[ind];
+        if (stats[0] == 5) return true;
+        
+        // horizontal
+        ind = 5*y+i;
+        stats[1] += values[ind];
+        if (stats[1] == 5) return true;
+        
+        // positive slope
+        ind = 5*i+i;
+        stats[2] += values[ind];
+        if (stats[2] == 5) return true;
+        
+        // negative slope
+        ind = 5*i+4-i;
+        stats[3] += values[ind];
+        if (stats[3] == 5) return true;
+    }
+    
+    return false;
+}
+
+
+// Set up the board for the start
+populateBoard(selectedOptions);
 
 </script>
 
