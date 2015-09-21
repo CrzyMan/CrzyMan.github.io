@@ -21,31 +21,44 @@
             height: 95%;
         }
         
-        @keyframes gunnaWin{
-            00%  { transform: scale(1) translate(-50%, -50%); }
-            50% {   transform: scale(1.4) translate(-40%, -40%); }
-            00%  { transform: scale(1) translate(-50%, -50%); }
+        @keyframes throb{
+            000%  { transform: scale(1) translate(-50%, -50%);}
+            050% {   transform: scale(1.5) translate(-33%, -33%); }
+            100%  { transform: scale(1) translate(-50%, -50%); }
         }
         
-        .winning{
-            display: none; 
+        @keyframes spin{
+            000%  { transform: rotate(-20deg);}
+            050%  { transform: rotate( 20deg);}
+            100%  { transform: rotate(-20deg); }
+        }
+        
+        .throbbing{
             position: absolute;
             text-align: center;
             font-size: 8vw;
+            animation-name: throb;
+            animation-duration: 0.5s;
+            animation-iteration-count: infinite;
+        }
+        
+        .spinning{
+            z-index: 1;
+            display: none;
+            position: absolute;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            z-index: 1;
-            //animation-name: gunnaWin;
-            //animation-duration: 0.5s;
-            //animation-iteration-count: infinite;
+            animation-name: spin;
+            animation-duration: 0.9s;
+            animation-iteration-count: infinite;
         }
     </style>
 </head>
 
 <body>
 
-<div class="winning" id="winDiv">YOU<br/>WIN!</div>
+<div class="spinning" id="winDiv"><div class="throbbing">YOU<br/>WIN!</div></div>
 
 <table>
     <tbody>
@@ -217,7 +230,11 @@ function toggleCellHighlight() {
         this.style.background = highlight;
         
         if(didjawin(this.x, this.y)){
-            alert("yuov win");
+            //alert("yuov win");
+            document.getElementById('winDiv').style.display = "block";
+            window.setTimeout(function(){
+                document.getElementById('winDiv').style.display = "none";
+            }, 5*1000);
         }
         
     } else {
