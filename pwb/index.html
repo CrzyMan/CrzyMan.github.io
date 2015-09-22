@@ -179,7 +179,7 @@ function populateBoard(list){
     for (var i = 0; i <= 24; i++){
         if (i != 12) {
             el = document.getElementById('c'+i)
-            el.innerText = daList[i];
+            el.innerHTML = daList[i];
             el.style.background = "";
             values[i] = 0;
         }
