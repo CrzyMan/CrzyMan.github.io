@@ -15,6 +15,10 @@
             height: 20px;
             font-size: 40pt;
         }
+        .small{
+            font-size: 8pt;
+            tpadding-right: 10%;
+        }
         table{
             position: absolute;
             width: 98%;
@@ -22,14 +26,14 @@
         }
         
         @keyframes throb{
-            000%  { transform: scale(1) translate(-50%, -50%);}
-            050% {   transform: scale(1.5) translate(-33%, -33%); }
-            100%  { transform: scale(1) translate(-50%, -50%); }
+            000%  { transform: scale(1)   translate(-50%, -50%); }
+            050%  { transform: scale(1.5) translate(-33%, -33%); }
+            100%  { transform: scale(1)   translate(-50%, -50%); }
         }
         
         @keyframes spin{
-            000%  { transform: rotate(-20deg);}
-            050%  { transform: rotate( 20deg);}
+            000%  { transform: rotate(-20deg); }
+            050%  { transform: rotate( 20deg); }
             100%  { transform: rotate(-20deg); }
         }
         
@@ -63,7 +67,7 @@
 <table>
     <tbody>
         <tr>
-            <td class="topRow" id="cb">B</td>
+            <td class="topRow" id="cb">B<span class="small">(Redraw)</span></td>
             <td class="topRow" id="ci">I</td>
             <td class="topRow" id="cn">N</td>
             <td class="topRow" id="cg">G</td>
@@ -86,7 +90,7 @@
         <tr>
             <td id="c10"></td>
             <td id="c11"></td>
-            <td id="c12">Free</td>
+            <td id="c12">Crushed Soul (We all have one)</td>
             <td id="c13"></td>
             <td id="c14"></td>
         </tr>
@@ -117,9 +121,9 @@ Array.prototype.clone = function(){return this.slice(0);};
 
 // Set the default options
 var defaultOptions = [
-"Roller Blades",
+"Skating Indoors",
 "Interview Attire",
-"Fox Ears (or other fox attire)",
+"Animal Attire",
 "Too-short Booty shorts",
 "Hugging Books",
 "Crutches",
@@ -130,8 +134,7 @@ var defaultOptions = [
 "Lone Alumnus",
 "Frantic Homework Turning-In",
 "Subway",
-"Noble Roman' s",
-"Jump!",
+"Food from Union cafeteria",
 "Frattire (2+ pieces of clothing)",
 "Mailroom Package",
 "Unknown Gender",
@@ -139,7 +142,7 @@ var defaultOptions = [
 "Mullet/Hockey Hair",
 "Mohawk",
 "Barefoot",
-"Plaid Jacket",
+"Plaid Donation Jacket",
 "#1 Shirt AND Hat",
 "Alcohol Suspicion",
 "Bonfire Shirt (any year)",
@@ -149,9 +152,18 @@ var defaultOptions = [
 "Weird Facial Hair (Not A Neckbeard)",
 "Neckbeard",
 "Colored Pants",
-"Over-Enthusiastic High-5"
-
-    
+"Over-Enthusiastic High-5",
+"Senior cursing excessively",
+"Freshman complaining about classwork",
+"Cartoon pajamas",
+"Someone sleeping",
+"Entirely neon item of clothing",
+"Abnormally colored hair",
+"Family giving themselves a tour",
+"Someone copying homework",
+"Overly affectionate couple",
+"Food from off campus",
+"Long-/Skate-/Penny-boarding indoors"
 ];
 // selectedOptions is used by functions
 var selectedOptions = defaultOptions.clone();
@@ -224,6 +236,7 @@ values[12] = 1;
 
 /** Cell toggles whether it is highlighted or not
  */
+var tmOutID = 0;
 function toggleCellHighlight() {
     if (values[this.ind]==0) {
         values[this.ind] = 1;
@@ -231,10 +244,7 @@ function toggleCellHighlight() {
         
         if(didjawin(this.x, this.y)){
             //alert("yuov win");
-            document.getElementById('winDiv').style.display = "block";
-            window.setTimeout(function(){
-                document.getElementById('winDiv').style.display = "none";
-            }, 5*1000);
+            showWin();
         }
         
     } else {
@@ -272,6 +282,20 @@ function didjawin(x, y){
     return false;
 }
 
+function showWin(){
+    window.clearTimeout(tmOutID);
+
+    document.getElementById('winDiv').style.display = "block";
+
+    tmOutID = window.setTimeout(function(){
+        tmOutID = 0;
+        hideWin();
+    }, 5*1000);
+}
+
+function hideWin(){
+    document.getElementById('winDiv').style.display = "none";
+}
 
 // Set up the board for the start
 populateBoard(selectedOptions);
