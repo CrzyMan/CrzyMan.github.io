@@ -59,6 +59,8 @@ dropZone.ondragend = function() {
     this.className = '';
     return false;
 };
+var fileName = "";
+var file = null;
 dropZone.ondrop = function(e) {
 	clearCanvas();
 	setDropZoneState(1);
@@ -67,8 +69,8 @@ dropZone.ondrop = function(e) {
   this.className = '';
   e.preventDefault();
 
-  var file = e.dataTransfer.files[0],
-      reader = new FileReader();
+  file = e.dataTransfer.files[0];
+  var reader = new FileReader();
   reader.onload = function(event) {
   	//console.log(event.target);
     window.setTimeout(function(){
@@ -77,6 +79,7 @@ dropZone.ondrop = function(e) {
     }, 200);
   };
   reader.readAsText(file);
+  fileName = file.name.substr(0,file.name.length-4);
 
   return false;
 };
@@ -125,8 +128,12 @@ function fixCanvasHeight(){
 window.onresize = fixCanvasHeight;
 fixCanvasHeight();
 var textHeight = 20;
-ctx.font=textHeight + "px Arial";
-ctx.textAlign = "center";
+function setFontSize(size){
+  ctx.font = size + "px Arial";
+  ctx.textAlign = "center";
+}
+setFontSize(textHeight);
+
 
 function loadSpeeds(txt){
 	try {
@@ -256,7 +263,7 @@ function plotHist(){
   originX = textHeight;
   originY = ctx.canvas.height - 2.3*textHeight;
   rightPad = textHeight;
-  topPad = textHeight
+  topPad = 2.2*textHeight
   
   // Max vals
   var maxFreq = freqs.reduce(reduceMax);
@@ -276,7 +283,12 @@ function plotHist(){
   for (var i = 0; i <= maxLabel; i += xStep){
   	ctx.fillText(i, i*sx + originX, originY + textHeight);
   }
-  console.log(maxSpeed);
+
+  // make title
+  var bigFont = Math.ceil(textHeight*2);
+  setFontSize(bigFont);
+  ctx.fillText(fileName, ctx.canvas.width>>1, bigFont-5);
+  setFontSize(textHeight);
   
   // make x axis
   ctx.beginPath();
