@@ -1,0 +1,333 @@
+<html>
+	<head>
+		<style>
+canvas {
+  border: 1px solid;
+  width: 100%;
+  height: 50%;
+}
+
+#dropZone {
+  width: 100%;
+  height: 30%;
+  border: 3px dashed #f00;
+  background-color: rgba(255, 0, 0, 0.2);
+  text-align: center;
+  font-size: 25px;
+}
+#dropSpan {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: inherit;
+}
+#xLabel {
+  wwidth: 100%;
+  text-align: center;
+}
+		</style>
+	</head>
+	<body>
+		<div id="dropZone">
+			<span id="dropSpan">Drop GPX File Here</span>
+		</div>
+		<br/>Buckets/Mph: <span id="s_rateVal">1</span><br/>
+		<input type="range" min="0" max="5" id="i_rate" value="2"/><br/>
+		<br/>
+		<button id="b_show" disabled>Show Distribution</button><br/><br/>
+		<canvas id="cnvs"></canvas>
+	<script>
+/*
+- Senses broken GPX files and notifies user with alert and colors
+- Red for no info
+- Orange for loading
+- Green for ready
+
+- Automatically shows histogram
+- Adjustable bucket sizes
+
+*/
+
+var b_show = document.getElementById('b_show');
+b_show.onclick = showDistr;
+
+var dropZone = document.getElementById('dropZone');
+dropZone.ondragover = function() {
+    this.className = 'hover';
+    return false;
+};
+dropZone.ondragend = function() {
+    this.className = '';
+    return false;
+};
+dropZone.ondrop = function(e) {
+	clearCanvas();
+	setDropZoneState(1);
+  
+  
+  this.className = '';
+  e.preventDefault();
+
+  var file = e.dataTransfer.files[0],
+      reader = new FileReader();
+  reader.onload = function(event) {
+  	//console.log(event.target);
+    window.setTimeout(function(){
+    	loadSpeeds(event.target.result);
+      if (!b_show.disabled) showDistr();
+    }, 200);
+  };
+  reader.readAsText(file);
+
+  return false;
+};
+dropZone.style.lineHeight = dropZone.clientHeight + "px";
+
+// 0- No data, 1- loading, 2- Success
+function setDropZoneState(newState){
+  var color = "";
+  var disabled = true;
+  switch(newState){
+    case 0:
+      color = "rgba(255, 0, 0,";
+      break;
+
+    case 1:
+      color = "rgba(255, 170, 0,";
+      break;
+
+    case 2:
+      color = "rgba(0, 204, 0,";
+      disabled = false;
+      break;
+
+    default:
+      color = "rgba(0, 0, 0,";
+      break;
+  }
+  dropZone.style.borderColor = color + "1)";
+  dropZone.style.backgroundColor = color + "0.2)";
+  b_show.disabled = disabled;
+}
+
+var parser, xmlDoc, ctx, bucketsPerMph = 1;
+var speeds, freqs;
+parser = new DOMParser();
+
+document.getElementById('i_rate').onchange = sliderListener;
+document.getElementById('i_rate').onmousemove = sliderListener;
+
+ctx = document.getElementById("cnvs").getContext('2d');
+function fixCanvasHeight(){
+	ctx.canvas.width = ctx.canvas.clientWidth;
+	ctx.canvas.height = ctx.canvas.clientHeight;
+	if (!b_show.disabled) showDistr();
+}
+window.onresize = fixCanvasHeight;
+fixCanvasHeight();
+var textHeight = 20;
+ctx.font=textHeight + "px Arial";
+ctx.textAlign = "center";
+
+function loadSpeeds(txt){
+	try {
+    // parse the XML text into a DOM tree
+    xmlDoc = parser.parseFromString(txt,"text/xml");
+
+    // Grab all of the GPS/Time data
+    var elems = xmlDoc.getElementsByTagName("trkpt");
+
+    // Instantiate for next step
+    var len = elems.length;
+    var trips = new Array(len);
+    speeds = new Array(len - 1);
+
+    // Form the data into friendlier format
+    for (var i = 0; i < len; i++){
+      trips[i] = toTriple(elems[i]);
+    }
+
+    // Extract the speeds (m/s)
+    for (var i = 1; i < len; i++){
+      speeds[i-1] = getSpeed(trips[i-1], trips[i]);
+    }
+
+    // Convert to mph
+    speeds = speeds.map(toMph);
+
+    // Show successful load
+    setDropZoneState(2);
+  } catch(e){
+  	// Show successful load
+    setDropZoneState(0);
+    
+    alert("Couldn't find GPS data.")
+  }
+  
+}
+
+var d = new Date();
+function toTriple(elem){
+	// [lat, lon, time]
+  var result = getTriple();
+  result.lat = parseFloat(elem.getAttribute('lat'));
+  result.lon = parseFloat(elem.getAttribute('lon'));
+  timeStr = elem.getElementsByTagName('time')[0].innerHTML;
+  d = new Date(timeStr);
+  result.time = d.getTime()/1000;
+  return result;
+}
+
+function getTriple(){
+	return {
+  	lat: 0,
+    lon: 0,
+    time: 0
+  };
+}
+
+function getSpeed(pt1, pt2){
+	dx = measure(pt1, pt2);
+  dt = getTimeDiff(pt1, pt2);
+  return dx/dt;
+}
+
+function toMph(e){
+	return e*2.23694;
+}
+
+function roundSpeed(spd){
+	return Math.floor(spd*bucketsPerMph)/bucketsPerMph;
+}
+
+function getTimeDiff(pt1, pt2){
+	return pt2.time - pt1.time;
+}
+
+function measure(pt1, pt2){
+		lat1 = pt1.lat;
+    lat2 = pt2.lat;
+    lon1 = pt1.lon;
+    lon2 = pt2.lon;
+    
+    var R = 6378.137; // Radius of earth in KM
+    var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+    var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    var d = R * c;
+    return d * 1000; // meters
+}
+
+function showDistr(){
+	popHist();
+  plotHist();
+}
+
+function popHist(){
+  maxSpeed = Math.ceil(speeds.reduce(reduceMax));
+  freqs = new Array(Math.ceil(maxSpeed*bucketsPerMph));
+  for (var i = 0; i < freqs.length; i++){
+  	freqs[i] = 0;
+  }
+  
+  // Fill buckets
+  for( var i = 0; i < speeds.length; i++){
+  	var bucket = roundSpeed(speeds[i])*bucketsPerMph;
+  	freqs[bucket] += 1;
+  }
+  
+  // Convert to percentages
+  freqs = freqs.map(toPct);
+}
+
+function toPct(e){
+	return 100* e / speeds.length;
+}
+
+function reduceMax(e1, e2){
+	return Math.max(e1, e2);
+}
+
+function plotHist(){
+  clearCanvas();
+  var x, sx, y, sy, originX, originY, rightPad, topPad
+  originX = textHeight;
+  originY = ctx.canvas.height - 2.3*textHeight;
+  rightPad = textHeight;
+  topPad = textHeight
+  
+  // Max vals
+  var maxFreq = freqs.reduce(reduceMax);
+  var maxSpeed = speeds.reduce(reduceMax);
+  
+  // Determine scaling
+  sx = (ctx.canvas.width - originX - rightPad) / (freqs.length / bucketsPerMph);
+  sy = (originY - topPad) / maxFreq
+  
+  // make x-axis labels
+  ctx.fillStyle = "black";
+  ctx.strokeStyle = "black";
+  ctx.font=textHeight + "px Arial";
+  ctx.textAlign = "center";
+  xStep = Math.ceil(maxSpeed/10);
+  maxLabel = Math.round(maxSpeed/xStep)*xStep;
+  for (var i = 0; i <= maxLabel; i += xStep){
+  	ctx.fillText(i, i*sx + originX, originY + textHeight);
+  }
+  console.log(maxSpeed);
+  
+  // make x axis
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(ctx.canvas.width - rightPad, originY);
+  ctx.stroke();
+  
+  // make x label
+  ctx.fillText("Mph", ctx.canvas.width>>1, originY + 2*textHeight);
+  
+  /* *
+  // make y labels
+  yStep = Math.ceil(maxFreq / 10);
+  for (var i = 0; i <= maxFreq; i += yStep){
+  	ctx.fillText(i, 0, originY - i*sy + 5);
+  }
+  // make y axis
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX, topPad);
+  ctx.stroke();
+  /* */
+  
+  // make bars
+  ctx.fillStyle = "#aaa";
+  ctx.strokeStyle = "black";
+  dx = sx/bucketsPerMph;
+  for (var i = 0; i < freqs.length; i++){
+  	x = originX + i*dx;
+    height = freqs[i]*sy;    
+    ctx.fillRect(x, originY, dx, -height)
+    ctx.strokeRect(x, originY, dx, -height)
+  }
+  /* */
+  //console.log(freqs);
+  
+  
+  
+}
+
+function clearCanvas(){
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+var sliderVals = [0.25, 0.5, 1, 2, 4, 10];
+function sliderListener(){
+	var val = parseInt(document.getElementById('i_rate').value);
+  bucketsPerMph = sliderVals[val];
+  
+  document.getElementById('s_rateVal').innerHTML = bucketsPerMph;
+}
+	</script>
+	</body>
+<html>
