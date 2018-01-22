@@ -118,7 +118,7 @@ function getStandards(){
 			waitForStandard(2)
 		])
 		.then((stds) => {
-			wait(10)
+			wait(50)
 			.then(() => resolve(stds));
 		});
 	});
