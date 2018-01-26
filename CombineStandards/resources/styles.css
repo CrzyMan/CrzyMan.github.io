@@ -52,6 +52,18 @@ div div{
 	display: none;
 }
 
+.fadeout {
+	animation: keyFade;
+	animation-duration: .1s;
+	animation-iteration-count: once;
+	opacity: 0;
+}
+
+@Keyframes keyFade {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+
 img.loading {
 	height: 50px;
 	width: 50px;
