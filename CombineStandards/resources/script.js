@@ -64,7 +64,7 @@ function loadNeededScripts(){
 
 
 let ag;
-var root1, root2, comboRoot, comboDom;
+var root1, root2, comboRoot, comboDom, dom1, dom2;
 
 /** Wait until a new part is dropped in
 	PARAMS:
@@ -73,10 +73,17 @@ var root1, root2, comboRoot, comboDom;
 		Promise - The promise that will resolve upon loading the file
 */
 function waitForStandard(num){
+	
 	return new Promise((resolve, reject) => {
 		
 		document.querySelector(".dropZone" + num).ondrop = function (e) {
 			e.preventDefault();
+			
+			if (num == 1){
+				document.querySelector(".dropZone1").classList.add("fadeOut");
+			} else if (num == 2){
+				document.querySelector(".dropZone2").classList.add("fadeOut");
+			}
 
 			var file = e.dataTransfer.files[0],
 				reader = new FileReader();
@@ -88,10 +95,21 @@ function waitForStandard(num){
 				// Switch over the drop zones
 				if (num == 1){
 					document.querySelector(".dropZone1").style.display = "none";
+					//document.querySelector(".dropZone1").classList.add("fadeOut");
+					
 					document.querySelector(".dropZone2").classList.remove("hide")
+					
+					// Process the 
+					dom1 = strToDOM(event.currentTarget.result);
+					const start = dom1.getElementById("start");
+					root1 = ag.consume(start);
 				} else if (num == 2){
 					document.querySelector("#dropWrapper").style.display = "none";
 					document.querySelector(".loadWrapper").classList.remove("hide")
+					
+					dom2 = strToDOM(event.currentTarget.result);
+					const start = dom2.getElementById("start");
+					root2 = ag.consume(start);
 				}
 				resolve([fileName, event.currentTarget.result]);
 			};
@@ -118,7 +136,7 @@ function getStandards(){
 			waitForStandard(2)
 		])
 		.then((stds) => {
-			wait(10)
+			wait(50)
 			.then(() => resolve(stds));
 		});
 	});
@@ -131,7 +149,12 @@ function getStandards(){
 		void
 */
 function parseAndShowStandards(stds){
+	// Processing: 			~800ms
+	// Rendering to screen: ~1400ms
 	
+	// Processing is now done while the files are dropped
+	
+	/* Offboarded to when the file is dropped *
 	// Get the two DOMs
 	const dom1 = strToDOM(stds[0][1]);
 	const dom2 = strToDOM(stds[1][1]);
@@ -140,10 +163,10 @@ function parseAndShowStandards(stds){
 	const start1 = dom1.getElementById("start");
 	const start2 = dom2.getElementById("start");
 	
-
 	// Aggregate each tree
 	root1 = ag.consume(start1);
 	root2 = ag.consume(start2);
+	/* */
 	
 	// Combine the trees
 	comboRoot = combine(root1, root2);
@@ -266,6 +289,8 @@ function loadBody(){
 function wait(time){
 	return new Promise((resolve) => window.setTimeout(resolve, time));
 }
+
+
 
 // Load in needed scripts first, get the standards we are combining, then make HTML
 // Using promises cause I wanna
