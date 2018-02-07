@@ -55,7 +55,8 @@ function loadNeededScripts(){
 		Promise.all([
 			loadScript("resources/Aggregator.js"),
 			loadScript("resources/Combine.js"),
-			loadScript("resources/ParseToHTML.js")
+			loadScript("resources/ParseToHTML.js"),
+			loadScript("resources/ParseToTableOfContents.js")
 		])
 		.then(resolve)
 		.catch(reject);
@@ -64,7 +65,7 @@ function loadNeededScripts(){
 
 
 let ag;
-var root1, root2, comboRoot, comboDom, dom1, dom2;
+var root1, root2, comboRoot, comboDom, tableOfContentsDom, dom1, dom2;
 
 /** Wait until a new part is dropped in
 	PARAMS:
@@ -174,11 +175,17 @@ function parseAndShowStandards(stds){
 	// Parse tree to HTML
 	comboDom = parseToHTML(comboRoot);
 	
+	// Parse tree to table of contents
+	tableOfContentsDom = parseToTableOfContents(comboRoot);
+	
 	// Hide the load wrapper
 	hideLoadWrapper();
 	
-	// Add to page
-	document.body.appendChild(comboDom);
+	// Add content body
+	document.getElementById("contentBody").appendChild(comboDom);
+	
+	// Add table of contents
+	document.getElementById("contentSidebar").appendChild(tableOfContentsDom);
 	
 	// Change Title
 	document.title = stds[1][0] + " and " + stds[0][0];
