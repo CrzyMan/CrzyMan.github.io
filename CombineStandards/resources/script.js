@@ -181,11 +181,13 @@ function parseAndShowStandards(stds){
 	// Hide the load wrapper
 	hideLoadWrapper();
 	
+	showContentWrapper();
+	
 	// Add content body
-	document.getElementById("contentBody").appendChild(comboDom);
+	addContentBody(comboDom);
 	
 	// Add table of contents
-	document.getElementById("contentSidebar").appendChild(tableOfContentsDom);
+	addTableOfContents(tableOfContentsDom);
 	
 	// Change Title
 	document.title = stds[1][0] + " and " + stds[0][0];
@@ -275,6 +277,10 @@ function hideLoadWrapper(){
 	document.getElementsByClassName("loadWrapper")[0].classList.add("hide");
 }
 
+function showContentWrapper(){
+	document.getElementById("contentWrapper").classList.remove("hide");
+}
+
 /** Returns a promise that resolves once the page loads
 	PARAMS:
 		void
@@ -297,6 +303,15 @@ function wait(time){
 	return new Promise((resolve) => window.setTimeout(resolve, time));
 }
 
+function addContentBody(el){
+		const target = document.getElementById("contentBody");
+		target.innerHTML = el.innerHTML;
+}
+
+function addTableOfContents(el){
+		const target = document.getElementById("contentSidebar");
+		target.innerHTML = el.innerHTML;
+}
 
 
 // Load in needed scripts first, get the standards we are combining, then make HTML

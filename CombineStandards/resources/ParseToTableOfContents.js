@@ -7,15 +7,20 @@
 function parseToTableOfContents(root, prevDepth){
 	const curDepth = prevDepth + 1 || 0;
 	
+	const elStr = "div";
+	const className = "tableOfContentsLine";
+	
 	// Grab this element
-	const result = document.createElement("span");
+	const result = document.createElement(elStr);
+	result.classList.add(className);
 	
 	const elementQuery = "h2, h4";
 	
 	// If we are past the root element
 	if (curDepth > 0){
-		const temp = root.element.querySelector(elementQuery) || document.createElement("div");
-		const toAdd = document.createElement("div");
+		const temp = root.element.querySelector(elementQuery) || document.createElement(elStr);
+		const toAdd = document.createElement("a");
+		toAdd.href = "#";
 		toAdd.innerHTML = temp.innerText;
 		result.appendChild(toAdd);
 	}

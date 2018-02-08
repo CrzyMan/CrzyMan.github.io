@@ -11,6 +11,33 @@ div div{
 	margin-left: 0px;
 }
 
+body {
+	padding: 0px;
+	margin: 0px;
+}
+
+/* Grid layout for content */
+#contentWrapper {
+	margin: 0px;
+	padding: 0px;
+	height: 100vh;
+	display: grid;
+	grid-gap: 0px;
+	grid-template-rows: 5em 1fr;
+	grid-template-columns: 15em 1fr;
+	grid-template-areas: "sidebar header"
+						 "sidebar body";
+}
+ .contentItem {
+	margin: 0px;
+	margin-left: 10px;
+	padding: 0px;
+}
+#contentHeader  { grid-area: header;  }
+#contentBody    { grid-area: body;    }
+#contentSidebar { grid-area: sidebar; }
+/* */
+
 /* Drop zone Stuff */
 	
 #dropWrapper {
@@ -48,10 +75,6 @@ div div{
 	align-items: center;
 }
 
-.hide {
-	display: none;
-}
-
 .fadeout {
 	animation: keyFade;
 	animation-duration: .1s;
@@ -82,4 +105,35 @@ img.loading {
 	to {
 		transform: rotate(360deg);
 	}
+}
+
+
+/* For the Table of contents */
+
+.tableOfContentsLine {
+	margin: 0px;
+	overflow-x: visible;
+	width: 100vw;
+}
+
+.tableOfContentsLine .tableOfContentsLine{
+	margin: 0px 0px 0px 20px !important;
+}
+
+#contentSidebar {
+	overflow-y: scroll;
+	overflow-x: scroll;
+}
+
+
+/* For the content body */
+#contentBody {
+	overflow-y: scroll;
+}
+
+
+/* This needs to be last if you want it to override everything else. That whole "cascading" part of "cascading style sheet"*/
+.hide {
+	visibility: hidden;
+	display: none !important;
 }
