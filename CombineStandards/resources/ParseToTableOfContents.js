@@ -7,22 +7,27 @@
 function parseToTableOfContents(root, prevDepth){
 	const curDepth = prevDepth + 1 || 0;
 	
-	const elStr = "div";
+	const elStr = "li";
 	const className = "tableOfContentsLine";
 	
 	// Grab this element
 	const result = document.createElement(elStr);
 	result.classList.add(className);
 	
-	const elementQuery = "h2, h4";
+	const elementQuery = "h2, h4, p";
 	
 	// If we are past the root element
 	if (curDepth > 0){
 		const temp = root.element.querySelector(elementQuery) || document.createElement(elStr);
+		let text = root.element.children[0].innerText.trim().split("\n")[0];
+		if (text.length == 0){
+			text = root.element.innerText.trim().split("\n")[0];
+		}
+		
 		const toAdd = document.createElement("a");
 		toAdd.href = "#" + root.element.id;
+		toAdd.innerHTML = temp.innerText.trim().split("\n")[0];
 		result.appendChild(toAdd);
-		toAdd.innerHTML = temp.innerText;
 	}
 	
 	// Get all of the child keys
@@ -30,18 +35,23 @@ function parseToTableOfContents(root, prevDepth){
 	
 	
 	// if we aren't too deep in the tree already
-	if (curDepth < 2){	
-		// To save on memory
-		let el;
-		// For each child
-		for (let i = 0; i < keys.length; i++){
+	if (curDepth < 2){
+		if (keys.length){
+			const ul = document.createElement("ul");
 			
-			// Get the element from the child
-			
-			el = parseToTableOfContents(root.getChild(keys[i]), curDepth);
-			
-			// Append all of the children
-			result.appendChild(el);
+			// To save on memory
+			let el;
+			// For each child
+			for (let i = 0; i < keys.length; i++){
+				
+				// Get the element from the child
+				
+				el = parseToTableOfContents(root.getChild(keys[i]), curDepth);
+				
+				// Append all of the children
+				ul.appendChild(el);
+			}
+			result.appendChild(ul);
 		}
 	}
 	

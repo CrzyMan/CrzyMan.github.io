@@ -130,7 +130,15 @@ img.loading {
 	width: max-content;
 }
 
-.tableOfContentsLine .tableOfContentsLine{
+.ttableOfContentsLine::before {
+	content: "";
+	white-space: pre;
+	position: relative;
+	outline: solid;
+	outline-offset: 0px;
+}
+
+.ttableOfContentsLine .tableOfContentsLine{
 	margin: 5px 0px 5px 10px !important;
 	padding: 0px 0px 0px 10px !important;
 }
