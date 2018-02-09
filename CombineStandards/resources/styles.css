@@ -24,7 +24,7 @@ body {
 	display: grid;
 	grid-gap: 0px;
 	grid-template-rows: 5em 1fr;
-	grid-template-columns: 15em 1fr;
+	grid-template-columns: 1fr 4fr;
 	grid-template-areas: "sidebar header"
 						 "sidebar body";
 }
@@ -108,21 +108,38 @@ img.loading {
 }
 
 
-/* For the Table of contents */
-
-.tableOfContentsLine {
+/* For the header */
+#contentHeader {
 	margin: 0px;
+	font-size: 2em;
+	background: #bbbbbb;
+}
+
+.center{
+	margin: 0px;
+	position: relative;
+	left: 50%;
+	top: 50%;
+	width: max-content;
+	transform: translate(-50%, -50%);
+}
+
+/* For the Table of contents */
+.tableOfContentsLine {
 	overflow-x: visible;
-	width: 100vw;
+	width: max-content;
 }
 
 .tableOfContentsLine .tableOfContentsLine{
-	margin: 0px 0px 0px 20px !important;
+	margin: 5px 0px 5px 10px !important;
+	padding: 0px 0px 0px 10px !important;
 }
 
 #contentSidebar {
 	overflow-y: scroll;
 	overflow-x: scroll;
+	display:inline-block;
+	padding-top: 1em;
 }
 
 

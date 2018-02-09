@@ -20,9 +20,9 @@ function parseToTableOfContents(root, prevDepth){
 	if (curDepth > 0){
 		const temp = root.element.querySelector(elementQuery) || document.createElement(elStr);
 		const toAdd = document.createElement("a");
-		toAdd.href = "#";
-		toAdd.innerHTML = temp.innerText;
+		toAdd.href = "#" + root.element.id;
 		result.appendChild(toAdd);
+		toAdd.innerHTML = temp.innerText;
 	}
 	
 	// Get all of the child keys
@@ -46,4 +46,11 @@ function parseToTableOfContents(root, prevDepth){
 	}
 	
 	return result;
+}
+
+function scrollToOnClick(){
+	return function(){
+		console.log("scrolling to");
+		return false;
+	};
 }
