@@ -125,7 +125,8 @@ img.loading {
 	position: relative;
 	left: 50%;
 	top: 50%;
-	width: max-content;
+	width: -moz-max-content;    /* Firefox/Gecko */
+	width: -webkit-max-content; /* Chrome */
 	transform: translate(-50%, -50%);
 }
 
@@ -183,7 +184,8 @@ img.loading {
 
 .tableOfContentsLine {
 	overflow-x: visible;
-	width: max-content;
+	width: -moz-max-content;    /* Firefox/Gecko */
+	width: -webkit-max-content; /* Chrome */
 }
 
 #contentSidebar {
