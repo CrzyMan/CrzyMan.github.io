@@ -19,14 +19,9 @@ function parseToTableOfContents(root, prevDepth){
 	// If we are past the root element
 	if (curDepth > 0){
 		const temp = root.element.querySelector(elementQuery) || document.createElement(elStr);
-		let text = root.element.children[0].innerText.trim().split("\n")[0];
-		if (text.length == 0){
-			text = root.element.innerText.trim().split("\n")[0];
-		}
-		
 		const toAdd = document.createElement("a");
 		toAdd.href = "#" + root.element.id;
-		toAdd.innerHTML = temp.innerText.trim().split("\n")[0];
+		toAdd.innerHTML = getFormattedInnerText(temp);
 		result.appendChild(toAdd);
 	}
 	
@@ -58,9 +53,6 @@ function parseToTableOfContents(root, prevDepth){
 	return result;
 }
 
-function scrollToOnClick(){
-	return function(){
-		console.log("scrolling to");
-		return false;
-	};
+function getFormattedInnerText(el){
+	return el.innerText.trim().split("\n")[0].toUpperCase();
 }

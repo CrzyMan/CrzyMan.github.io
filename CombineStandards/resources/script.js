@@ -310,7 +310,9 @@ function addContentBody(el){
 
 function addTableOfContents(el){
 		const target = document.getElementById("contentSidebar");
-		target.innerHTML = el.innerHTML;
+		const ul = el.children[0];
+		ul.classList.add("tree");
+		target.appendChild(ul);
 }
 
 

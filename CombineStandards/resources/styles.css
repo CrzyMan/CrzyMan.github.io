@@ -28,18 +28,23 @@ body {
 	grid-template-areas: "sidebar header"
 						 "sidebar body";
 }
+@media (max-width: 1300px){
+	#contentWrapper {
+		grid-template-columns: 0px 1fr;
+	}
+}
+
  .contentItem {
-	margin: 0px;
+	margin: 0;
 	margin-left: 10px;
-	padding: 0px;
+	padding: 0;
 }
 #contentHeader  { grid-area: header;  }
 #contentBody    { grid-area: body;    }
 #contentSidebar { grid-area: sidebar; }
-/* */
+
 
 /* Drop zone Stuff */
-	
 #dropWrapper {
 	width: 100%;
 	height: 100%;
@@ -111,7 +116,7 @@ img.loading {
 /* For the header */
 #contentHeader {
 	margin: 0px;
-	font-size: 2em;
+	font-size: 3em;
 	background: #bbbbbb;
 }
 
@@ -125,29 +130,70 @@ img.loading {
 }
 
 /* For the Table of contents */
+.tree a {
+	font-weight: normal;
+}
+
+.tree, .tree ul {
+	margin: 0 0 0 0.5em;
+	padding: 0;
+	list-style: none;
+	position: relative;
+}
+
+.tree:before,
+.tree ul:before {
+  content:"";
+  display:block;
+  width:0;
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:0;
+  border-left:1px solid;
+}
+
+.tree li {
+  margin:0;
+  padding:0 1em; /* indentation + .5em */
+  line-height:1.5em; /* default list item's `line-height` */
+  font-weight:bold;
+  position:relative;
+}
+
+.tree li:before {
+  content:"";
+  display:block;
+  width:10px; /* same with indentation */
+  height:0;
+  border-top:1px solid;
+  margin-top:-1px; /* border top width */
+  position:absolute;
+  top:1em; /* (line-height/2) */
+  left:0;
+}
+
+.tree li:last-child:before {
+  background:white; /* same with body background */
+  height:auto;
+  top:1em; /* (line-height/2) */
+  bottom:0;
+}
+
+
 .tableOfContentsLine {
 	overflow-x: visible;
 	width: max-content;
 }
 
-.ttableOfContentsLine::before {
-	content: "";
-	white-space: pre;
-	position: relative;
-	outline: solid;
-	outline-offset: 0px;
-}
-
-.ttableOfContentsLine .tableOfContentsLine{
-	margin: 5px 0px 5px 10px !important;
-	padding: 0px 0px 0px 10px !important;
-}
-
 #contentSidebar {
 	overflow-y: scroll;
 	overflow-x: scroll;
-	display:inline-block;
 	padding-top: 1em;
+}
+
+#contentSidebar > span{
+	font: 1.5em bold;
 }
 
 
