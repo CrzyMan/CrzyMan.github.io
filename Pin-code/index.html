@@ -1,0 +1,119 @@
+<html>
+    <head>
+        <script src="sha256.js"></script>
+        <style>
+            body{
+                background: black;
+                display: grid;
+                height: 100%;
+                grid-template-rows: 1fr 1fr 1fr;
+                overflow: hidden;
+            }
+            
+            .pinpad {
+                display: grid;
+                grid-template-rows: repeat(5, 1fr);
+                margin: auto auto;
+                width: 30%
+            }
+            
+            .row {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            
+            .row > * {
+                height: 80px;
+                font-size: 2em;
+            }
+            
+            .allRows{
+                grid-column: 1 / 4;
+            }
+            
+            #display{
+                text-align: right;
+                font-family: courier;
+                letter-spacing: 1em;
+                font-size: 4em;
+            }
+            
+            #enterButton{
+                border-radius: 10px;
+                margin-top: 1em;
+            }
+            
+            #winMessage{
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                display: grid;
+                grid-template-rows: 1fr auto 1fr;
+                background: white;
+            }
+            
+            #winMessage > *{
+                grid-row: 2;
+                font-size: 10em;
+            }
+            
+            .hidden{
+                display: none !important;
+            }
+            
+            .wrongAnswer{
+                position: relative;
+                animation: wrong-answer 0.3s;
+            }
+            
+            @keyframes wrong-answer {
+                0%, 100% {
+                    left: 0px;
+                }
+                20% , 60% {
+                    left: 15px;
+                }
+                40% , 80% {
+                    left: -15px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="winMessage" class="hidden">
+            <center>YOU WIN!</center>
+        </div>
+        <div>&nbsp;</div>
+        <div class="pinpad">
+            <div class="row">
+                <input id="display" class="allRows" type="text" disabled=true />
+            </div>
+            <div class="row">
+                <button>1</button>
+                <button>2</button>
+                <button>3</button>
+            </div>
+            <div class="row">
+                <button>4</button>
+                <button>5</button>
+                <button>6</button>
+            </div>
+            <div class="row">
+                <button>7</button>
+                <button>8</button>
+                <button>9</button>
+            </div>
+            <div class="row">
+                <div>&nbsp;</div>
+                <button>0</button>
+                <div>&nbsp;</div>
+            </div>
+            <div class="row">
+                <button id="enterButton" class="allRows">Enter</button>
+            </div>
+        </div>
+        <div>&nbsp;</div>
+        <script src="script.js"></script>
+    </body>
+</html>
