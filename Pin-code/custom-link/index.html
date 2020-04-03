@@ -1,0 +1,38 @@
+<html>
+    <head>
+        <script src="../sha256.js"></script>
+    </head>
+    <body>
+        <h2>Enter a new pin code of 4-6 digits.</h2>
+        <input id="pinCode" type="number" maxlength="6" minlength="4" style="width: 5em;"/>
+        <h2>New Link:</h2>
+        <a id="output" target="_blank"></div>
+        <script>
+        	var pincode = document.getElementById("pinCode");
+        	var output = document.getElementById("output");
+
+        	pincode.addEventListener("input", handlePincodeChange);
+
+        	function handlePincodeChange(e){
+        		if (pincode.value.length > pincode.maxLength){
+        			pincode.value = pincode.value.substr(0,pincode.maxLength);
+        		}
+        		if(pincode.value.length >= pincode.minLength){
+	        		var url = pincodeToLink(pincode.value);
+	        		updateOutput(url);
+        		} else {
+        			updateOutput("");
+        		}
+        	}
+
+        	function pincodeToLink(pincode){
+        		return `https://crzyman.github.io/Pin-code?key=${sha256(pincode)}`;
+        	}
+
+        	function updateOutput(url){
+        		output.innerHTML = url;
+        		output.href = url;
+        	}
+        </script>
+    </body>
+</html>
