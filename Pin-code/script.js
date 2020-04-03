@@ -44,7 +44,7 @@ function showWrongAnswer(){
     updateDisplay();
 }
 
-const maxAnswerLength = 5;
+const maxAnswerLength = 6;
 function handleNumberPress(num){
     currentAnswer += "" + num;
     if (currentAnswer.length > maxAnswerLength) {
