@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Natural Language Password</title>
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+		}
+
+		#app {
+			height: 100%;
+			display: grid;
+
+			align-content: center;
+			justify-content: center;
+			text-align: center;
+		}
+
+		#pass {
+			font-size: 3em;
+			padding: 20px;
+		}
+
+		#refresh {
+			font-size: 2em;
+			padding: 10px 20px;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="app">
+		<div id="pass"></div>
+		<div id="refreshHolder"><button id="refresh">Refresh</button></div>
+	</div>
+
+	<script>
+		/* ***************** */
+		/* Utility Functions */
+		/* ***************** */
+		$ = (q, el) => (el || document).querySelector(q);
+		$$ = (q, el) => Array.from((el || document).querySelectorAll(q));
+
+
+		/* ********************* */
+		/* Globals and Constants */
+		/* ********************* */
+		/*
+		{
+			maxLength: #,
+			counts: {
+				3: #,
+				4: #,
+				...
+			},
+			data: <string>[]
+		}
+		*/
+		let nouns = {};
+		let adjectives = {};
+
+
+		/* ************** */
+		/* DOM References */
+		/* ************** */
+		const div_pass = $("#pass");
+		const btn_refresh = $("#refresh");
+
+
+		/* ************************* */
+		/* Assigning Event Listeners */
+		/* ************************* */
+		btn_refresh.addEventListener("click", handleClickRefresh);
+
+
+		/* ************** */
+		/* Event Handlers */
+		/* ************** */
+		function handleClickRefresh(){
+			showNewPassphrase();
+		}
+
+
+		/* **************** */
+		/* Helper Functions */
+		/* **************** */
+		function processCSVToNouns(data) {
+			nouns = processCSVToObject(data);
+		}
+
+		function processCSVToAdjectives(data) {
+			adjectives = processCSVToObject(data);
+		}
+
+		function processCSVToObject(data) {
+			const result = {};
+			
+			// Get the length of the longest word
+			result.maxLength = +data.shift();
+			
+			// Get the counts for each length 
+			result.counts = {};
+			for (let i = 3; i <= result.maxLength; i++){
+				result.counts[i] = +data.shift();
+			}
+
+			// Set the data
+			result.data = data;
+
+			return result;
+		}
+
+		
+		function getANPair(){
+			return `${getAdjective()} ${getNoun()}`;
+		}
+
+		function getNoun(){
+			return selectRandomFrom(nouns);
+		}
+
+		function getAdjective(){
+			return selectRandomFrom(adjectives);
+		}
+
+		function selectRandomFrom(obj){
+			// Get a random index inside the array
+			const n = ~~((obj.data.length + 1)*Math.random());
+			// Return the nth element in the data 
+			return getNthElement(n, obj)
+		}
+
+		function getNthElement(n, obj){
+			// Will hopefully change with the data as it gets compressed
+			return obj.data[n];
+		}
+
+		function showNewPassphrase(){
+			// Get three adjective-noun pairs
+			const p = `${getANPair()} ${getANPair()} ${getANPair()}`;
+
+			// Set the passphrase div's text
+			div_pass.textContent = p;
+		}
+
+
+
+		/* ************** */
+		/* BUSINESS LOGIC */
+		/* ************** */
+		(async () => {
+			// Wait for things to load
+			await Promise.all([
+				// Load the nouns
+				fetch("nouns.csv")
+					.then(resp => resp.text())
+					.then(text => text.split(","))
+					.then(processCSVToNouns),
+				// Load the adjectives
+				fetch("adjectives.csv")
+					.then(resp => resp.text())
+					.then(text => text.split(","))
+					.then(processCSVToAdjectives)
+			]);
+
+			// Then show a new passphrase
+			showNewPassphrase();
+		})();
+	</script>
+</body>
+
+</html>
