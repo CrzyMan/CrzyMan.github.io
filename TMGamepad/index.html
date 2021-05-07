@@ -1,0 +1,143 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+		<title>Controller</title>
+		<style>
+			body {
+				background: transparent;
+				background: blue;
+			}
+
+			.display {
+				display: grid;
+				grid-template:
+				".   accel   accel   ." 50px
+				".   brake   brake   ." 50px /
+				75px  25px   25px    75px;
+
+				transform-origin: top left;
+				transform: scale(1.8);
+				width: 300px;
+			}
+
+			.left {
+				background-color: orange;
+				grid-column: 1 / 3;
+				grid-row: 1 / -1;
+				width: 100px;
+				transform: rotate(180deg);
+				justify-self: right;
+			}
+
+			.right {
+				background-color: orange;
+				grid-column: 3 / -1;
+				grid-row: 1 / -1;
+				width: 100px;
+			}
+
+			.left.background,
+			.right.background {
+				background-color: white;
+			}
+
+			.sideArrow {
+				clip-path: polygon(100px 50px, 0 100px, 0 0);
+				transition: all 50ms;
+			}
+
+			.vertArrow {
+				clip-path: polygon(0 0, 25px 50px, 50px 0);
+			}
+
+			.accel {
+				grid-area: accel;
+				background-color: greenyellow;
+				z-index: 1;
+				width: 50px;
+				height: 50px;
+				transform: rotate(180deg);
+				align-self: end;
+			}
+
+			.brake {
+				grid-area: brake;
+				background-color: red;
+				z-index: 1;
+				width: 50px;
+				height: 50px;
+			}
+
+			.accel.background {
+				background-color: hsl(89, 100%, 90%);
+			}
+			.brake.background {
+				background-color: hsl(357, 100%, 90%);
+			}
+
+		</style>
+	</head>
+	<body>
+		<div class="display">
+			<div class="left background sideArrow"></div>
+			<div class="accel background vertArrow"></div>
+			<div class="brake background vertArrow"></div>
+			<div class="right background sideArrow"></div>
+			<div class="left foreground sideArrow"></div>
+			<div class="accel foreground vertArrow"></div>
+			<div class="brake foreground vertArrow"></div>
+			<div class="right foreground sideArrow"></div>
+		</div>
+
+		<script>
+			const $ = (q, el) => (el || document).querySelector(q);
+			const div_left =  $(".left.foreground");
+			const div_right = $(".right.foreground");
+			const div_accel = $(".accel.foreground");
+			const div_brake = $(".brake.foreground");
+
+			var gp; // gamepad
+			var tick; // for canceling the 
+
+			window.addEventListener("gamepadconnected", (e) => {
+				gp = navigator.getGamepads()[0];
+				updateGamepad();
+			});
+
+			window.addEventListener("gamepaddisconnected", (e) => {
+				clearTimeout(tick);
+				console.log("disconnected");
+			});
+
+
+			function updateGamepad(){
+				if (gp.buttons[4] != undefined){
+					setLeftRight();
+					setBrakeAccel();
+				}
+
+				tick = setTimeout(updateGamepad, 20);
+			}
+
+			function setLeftRight(){
+				// Get x axis position
+				const x = gp.axes[0];
+				
+				const left = x > 0 ? 0 : -x;
+				const right = x < 0 ? 0 : x;
+
+				div_left.style.width = `${left*100}%`;
+				div_right.style.width = `${right*100}%`;
+			}
+
+			function setBrakeAccel(){
+				const isBraking = gp.buttons[4].pressed;
+				const isAccelerating = gp.buttons[6].pressed;
+
+				div_brake.style.height = `${100*isBraking}%`;
+				div_accel.style.height = `${100*isAccelerating}%`;
+			}
+			
+		</script>
+	</body>
+</html>
