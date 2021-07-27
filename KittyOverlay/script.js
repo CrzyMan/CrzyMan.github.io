@@ -44,6 +44,16 @@ commands.push({
 	"callback": runBoo
 });
 
+commands.push({
+	"pattern": /^!monke$/i,
+	"callback": playMonkeAudio
+})
+
+commands.push({
+	"pattern": /^!monke v$/i,
+	"callback": runMonkeVideo
+})
+
 /*********************/
 /* Utility Functions */
 /*********************/
@@ -55,6 +65,7 @@ $$ = (q, el = document) => Array.from(el.querySelectorAll(q));
 /******************/
 const video_kitty = $("#kitty video");
 const video_boo = $("#boo video");
+const video_monke = $("#monke video");
 
 
 /*************/
@@ -72,6 +83,18 @@ function runKitty(){
 
 function runBoo(){
 	runVideo(video_boo, 1500)
+}
+
+function runMonkeVideo(){
+	runVideo(video_monke, 1300)
+}
+
+async function playMonkeAudio(){
+	video_monke.style.display = "none";
+
+	await runVideo(video_monke, 1300);
+
+	video_monke.style.display = "";
 }
 
 function hideVideo(elem){
