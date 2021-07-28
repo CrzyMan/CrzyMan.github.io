@@ -4,7 +4,6 @@
 // Connect to the channel(s)
 const client = new tmi.Client({
 	channels: [
-		"DaCrzyMan",
 		"OneNiceKitty"
 	]
 });
@@ -46,11 +45,6 @@ commands.push({
 
 commands.push({
 	"pattern": /^!monke$/i,
-	"callback": playMonkeAudio
-})
-
-commands.push({
-	"pattern": /^!monke v$/i,
 	"callback": runMonkeVideo
 })
 
@@ -87,14 +81,6 @@ function runBoo(){
 
 function runMonkeVideo(){
 	runVideo(video_monke, 1300)
-}
-
-async function playMonkeAudio(){
-	video_monke.style.display = "none";
-
-	await runVideo(video_monke, 1300);
-
-	video_monke.style.display = "";
 }
 
 function hideVideo(elem){
