@@ -1,0 +1,33 @@
+html, body {
+	font-family: 'Roboto', sans-serif;
+}
+
+#app {
+	display: grid;
+	justify-content: center;
+}
+
+.header {
+	font-size: 4em;
+	grid-column: 1;
+	text-align: right;
+}
+
+.category {
+	display: grid;
+	grid-template-columns: max-content max-content;
+	column-gap: 1em;
+	row-gap: 1em;
+	margin-bottom: 4em;
+}
+
+.category .name {
+	grid-column: 1;
+	text-align: right;
+	align-self: center;
+}
+
+.category .description {
+	grid-column: 2;
+	max-width: 65ch;
+}
