@@ -25,6 +25,8 @@ html, body {
 	grid-column: 1;
 	text-align: right;
 	align-self: center;
+	font-weight: bold;
+	letter-spacing: 0.07em;
 }
 
 .category .description {
