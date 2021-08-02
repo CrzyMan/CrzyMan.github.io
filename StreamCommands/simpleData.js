@@ -2,6 +2,10 @@ const categories = {
 	"everyone": {
 		"commands": [
 			{
+				name: "!d{size}",
+				description: "Roll a die of a particular size. e.g. !D20 rolls a twenty sided die., !D1000 rolls a 1,000 sided die."
+			},
+			{
 				name: "!commands",
 				description: "Shows a link to this page."
 			},
