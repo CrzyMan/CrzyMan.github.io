@@ -5,11 +5,8 @@
     <title>Class Clock 2</title>
     <style>
 
-canvas{
-    'border: solid;
-}
-
 .cnvs{
+    z-index: 1;
     position: absolute;
     transform: translate(-50%,-50%);
     left: 50%;
@@ -32,7 +29,6 @@ div{
     width: 99%;
 }
     </style>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <link rel="apple-touch-icon" sizes="57x57" href="icons/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="icons/apple-icon-60x60.png">
@@ -128,6 +124,16 @@ function getGradColor(prog){
 }
 
 
+// angle the mouse is from the center; hether the mouse is on the outer ring
+var mouseAngle = 0; mouseActive = false;
+function trackMousePos(e){
+    var dx = e.offsetX - winSize*0.5;
+    var dy = e.offsetY - winSize*0.5;
+    mouseAngle = Math.PI - Math.atan2(dx,dy);
+    mouseRadius = Math.sqrt(dx*dx + dy*dy);
+    mouseActive = mouseRadius > winSize*0.45 && mouseRadius < winSize*0.5;
+}
+ctx.canvas.addEventListener('mousemove', trackMousePos, false);
 
 
 // current time
@@ -162,26 +168,26 @@ const workTimes =[
 
 // times for the start and end of each class
 const schoolEvents = [
-    [[08, 05], "Start of First"],
-    [[08, 55], "End of First"],
+    [[08, 00], "Start of First"],
+    [[08, 50], "End of First"],
     [[09, 00], "Start of Second"],
     [[09, 50], "End of Second"],
-    [[09, 55], "Start of Third"],
-    [[10, 45], "End of Third"],
-    [[10, 50], "Start of Fourth"],
-    [[11, 40], "End of Fourth"],
-    [[11, 45], "Start of Fifth"],
-    [[12, 35], "End of Fifth"],
-    [[12, 40], "Start of Sixth"],
-    [[13, 30], "End of Sixth"],
-    [[13, 35], "Start of Seventh"],
-    [[14, 25], "End of Seventh"],
-    [[14, 30], "Start of Eighth"],
-    [[15, 20], "End of Eighth"],
-    [[15, 25], "Start of Ninth"],
-    [[16, 15], "End of Ninth"],
-    [[16, 20], "Start of Tenth"],
-    [[17, 10], "End of Tenth"],
+    [[10, 00], "Start of Third"],
+    [[10, 50], "End of Third"],
+    [[11, 00], "Start of Fourth"],
+    [[11, 50], "End of Fourth"],
+    [[12, 00], "Start of Fifth"],
+    [[12, 50], "End of Fifth"],
+    [[13, 00], "Start of Sixth"],
+    [[13, 50], "End of Sixth"],
+    [[14, 00], "Start of Seventh"],
+    [[14, 50], "End of Seventh"],
+    [[15, 00], "Start of Eighth"],
+    [[15, 50], "End of Eighth"],
+    [[16, 00], "Start of Ninth"],
+    [[16, 50], "End of Ninth"],
+    [[17, 00], "Start of Tenth"],
+    [[17, 50], "End of Tenth"]
 ];
 
 // produce a more useful array of events from the other events
@@ -362,7 +368,12 @@ var animFrame = 0;
 /** Function to coordinate the update of the screen
 */
 function tick(){
-    time = getTimeAngle();
+    if (!mouseActive) {
+        time = getTimeAngle();
+    } else {
+        time = mouseAngle;
+    }
+    
     drawRings(ctx, time);
     rads.forEach(drawRad);
     
