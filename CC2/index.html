@@ -5,6 +5,17 @@
     <title>Class Clock 2</title>
     <style>
 
+body {
+    background-color: hsl(0 0% 25%);
+    color: hsl(0 0% 95%);
+    transition: all 250ms ease-in-out;
+}
+
+body.light {
+    background-color: hsl(0 0% 95%);
+    color: hsl(0 0% 5%);
+}
+
 .cnvs{
     z-index: 1;
     position: absolute;
@@ -13,8 +24,7 @@
     top: 50%;
 }
 
-.spn{
-    
+.spn {
     position: absolute;
     left: 50%;
     top: 50%;
@@ -23,11 +33,24 @@
     transform: translate(-50%,-50%);
 }
 
-div{
-    overflow-x: hidden;
-    position: relative;
-    width: 99%;
+.toggle {
+    cursor: pointer;
 }
+
+.toggle > div {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+body:not(.light) .toggle .dark-mode {
+    display: none;
+}
+
+.light .toggle .light-mode {
+    display: none;
+}
+
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <link rel="apple-touch-icon" sizes="57x57" href="icons/apple-icon-57x57.png">
@@ -50,6 +73,16 @@ div{
 </head>
 
 <body>
+    <div class="toggle">
+        <div class="dark-mode">
+            <img src="./icons/dark-mode.svg" alt="dark mode" >
+            Show Dark mode
+        </div>
+        <div class="light-mode">
+            <img src="./icons/light-mode.svg" alt="dark mode" >
+            Show Light mode
+        </div>
+    </div>
     <canvas class='cnvs' id='canvas'></canvas>
     <div class='spn'>
         <center>
@@ -61,6 +94,18 @@ div{
 <script>
 
 console.log("running");
+
+// light/dark mode
+const div_dark = document.querySelector(".dark-mode");
+const div_light = document.querySelector(".light-mode");
+
+div_dark.addEventListener('click', e => {
+    document.body.classList.remove('light');
+});
+
+div_light.addEventListener('click', e => {
+    document.body.classList.add('light');
+});
 
 // initialize canvases
 var ctx = document.getElementById('canvas').getContext('2d');
